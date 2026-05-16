@@ -1,0 +1,1396 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lifespring Medical Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+
+  --radius: 14px;
+  --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #f4f6fb 0%, #e8eef7 100%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.bg-img {
+  background: linear-gradient(
+      120deg,
+      rgba(37, 99, 235, 0.75),
+      rgba(15, 23, 42, 0.75)
+    ),
+    url("https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=1920&q=80");
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+}
+
+.sidebar {
+  width: 270px;
+  min-height: 100vh;
+  background: #0d1b2a; 
+  color: white;
+  padding: 20px;
+  position: sticky;
+  top: 0;
+}
+
+.sidebar .nav-link {
+  color: #cbd5e1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.sidebar .nav-link.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.sidebar .nav .collapse .nav-link {
+  padding: 6px 12px 6px 32px;
+  font-size: 0.9rem;
+}
+
+.content {
+  flex-grow: 1;
+  background: transparent;
+  padding: 24px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.12);
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.kpi-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+}
+
+.text-muted {
+  color: var(--muted) !important;
+}
+
+.form-control,
+.form-select {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.btn {
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: var(--primary);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: var(--primary-light);
+}
+
+.table {
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.table thead {
+  background: #f1f5f9;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -270px;
+    transition: 0.3s;
+    z-index: 1050;
+  }
+
+  .sidebar.show {
+    left: 0;
+  }
+}
+    </style>
+</head>
+<body>
+<div class="bg-img">
+    <div class="d-flex w-100">
+   
+<!-- SIDEBAR -->
+<div class="bg-dark text-white p-3 sidebar d-flex flex-column" id="sidebar">
+    <div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="brand-title mb-0"><i class="bi bi-heart-pulse"></i> LIFESPRING MEDICAL CENTER</h4>
+            <button class="btn btn-sm btn-outline-light d-md-none" onclick="document.getElementById('sidebar').classList.remove('show')">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <p class="user-name mb-1">{{ request.user.get_full_name|default:request.user.username }}</p>
+        <div class="text-center mb-2">
+            <span class="badge bg-info">{{ role|title }}</span>
+        </div>
+        <hr>
+        <ul class="nav flex-column">
+            {% if role == 'admin' or role == 'receptionist' %}
+            
+            <!-- LANDING PAGE -->
+            <li class="nav-item">
+                <a href="{% url 'landing' %}" class="nav-link text-white {% if page == 'landing' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-house"></i> Home
+                </a>
+            </li>
+
+            <!-- DASHBOARD -->
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link text-white {% if page == 'dashboard' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+
+            <!-- DOCTORS DROPDOWN -->
+            <li class="nav-item">
+                <a class="nav-link text-white {% if page == 'doctors' %}bg-secondary rounded{% endif %}" 
+                   data-bs-toggle="collapse" href="#doctorsCollapse" role="button" aria-expanded="{% if page == 'doctors' %}true{% else %}false{% endif %}">
+                    <i class="bi bi-person-badge"></i> Doctors 
+                    <i class="bi bi-chevron-down float-end"></i>
+                </a>
+                <div class="collapse {% if page == 'doctors' %}show{% endif %}" id="doctorsCollapse">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="{% url 'doctor_list' %}" class="nav-link text-white">
+                                <i class="bi bi-list"></i> View All Doctors
+                            </a>
+                        </li>
+                        {% if role == 'admin' %}
+                        <li class="nav-item">
+                            <a href="{% url 'dashboard' %}" class="nav-link text-white">
+                                <i class="bi bi-plus-circle"></i> Add Doctor
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}?page=patients" class="nav-link text-white {% if page == 'patients' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-people"></i> Patients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}?page=admissions" class="nav-link text-white {% if page == 'admissions' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-building"></i> Admissions
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}?page=invoices" class="nav-link text-white {% if page == 'invoices' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-receipt"></i> Billing
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'report' %}" class="nav-link text-white {% if page == 'report' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-bar-chart"></i> Report
+                </a>
+            </li>
+            
+            {% elif role == 'doctor' %}
+            <li class="nav-item">
+                <a href="{% url 'landing' %}" class="nav-link text-white {% if page == 'landing' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-house"></i> Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link text-white {% if page == 'dashboard' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}?page=patients" class="nav-link text-white {% if page == 'patients' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-people"></i> My Patients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}?page=appointments" class="nav-link text-white {% if page == 'appointments' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-calendar-check"></i> Today's Appointments
+                </a>
+            </li>
+            
+            {% elif role == 'nurse' %}
+            <li class="nav-item">
+                <a href="{% url 'nurse_dashboard' %}" class="nav-link text-white {% if page == 'nurse_dashboard' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'nurse_dashboard' %}" class="nav-link text-white {% if page == 'nurse_dashboard' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-people"></i> My Patients
+                </a>
+            </li>
+            
+            {% elif role == 'patient' %}
+            <li class="nav-item">
+                <a href="{% url 'landing' %}" class="nav-link text-white {% if page == 'landing' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-house"></i> Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'patient_dashboard' %}?page=book" class="nav-link text-white {% if page == 'book' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-calendar-plus"></i> Book Appointment
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'patient_dashboard' %}?page=my_appointments" class="nav-link text-white {% if page == 'my_appointments' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-calendar-check"></i> My Appointments
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="nav-item">
+                <a href="{% url 'about' %}" class="nav-link text-white {% if page == 'about' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-info-circle"></i> About
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'contact' %}" class="nav-link text-white {% if page == 'contact' %}bg-secondary rounded{% endif %}">
+                    <i class="bi bi-envelope"></i> Contact
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="mt-auto">
+        <hr>
+        <a href="{% url 'logout' %}" class="nav-link text-danger">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+</div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-grow-1 content">
+        <nav class="navbar navbar-dark bg-dark d-md-none">
+            <div class="container-fluid">
+                <button class="btn btn-outline-light" onclick="document.getElementById('sidebar').classList.add('show')">
+                    <i class="bi bi-list"></i>
+                </button>
+                <span class="navbar-brand mb-0">LIFESPRING MEDICAL CENTER</span>
+            </div>
+        </nav>
+
+        <div class="p-4">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- LANDING PAGE -->
+            {% if page == 'landing' %}
+<!-- HERO SECTION -->
+<div class="card p-5 text-center shadow-sm border-0">
+    <h1 class="display-5 fw-bold mb-3">Welcome to Lifespring Medical Center</h1>
+    <p class="text-muted mb-4">
+        Manage patients, appointments, and doctors efficiently in one secure platform.
+        <br>Your trusted healthcare management system
+    </p>
+     
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-4">
+            <i class="bi bi-speedometer2"></i> Go to Dashboard
+        </a>
+        <a href="{% url 'create_appointment' %}" class="btn btn-outline-primary btn-lg px-4">
+            <i class="bi bi-calendar-plus"></i> Book Appointment
+        </a>
+    </div>
+</div>
+
+<!-- FEATURES -->
+<div class="row g-4 mt-4">
+    <div class="col-md-4">
+        <div class="card h-100 text-center p-4 shadow-sm border-0">
+            <div class="fs-1 mb-3">👨‍⚕️</div>
+            <h4>Doctors</h4>
+            <p class="text-muted">
+                Access and manage medical specialists across multiple departments.
+            </p>
+            <a href="{% url 'doctor_list' %}" class="btn btn-outline-primary mt-2">View Doctors</a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 text-center p-4 shadow-sm border-0">
+            <div class="fs-1 mb-3">👥</div>
+            <h4>Patients</h4>
+            <p class="text-muted">
+                Easily register, update, and track patient records securely.
+            </p>
+            <a href="{% url 'dashboard' %}?page=patients" class="btn btn-outline-primary mt-2">View Patients</a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 text-center p-4 shadow-sm border-0">
+            <div class="fs-1 mb-3">📅</div>
+            <h4>Appointments</h4>
+            <p class="text-muted">
+                Schedule and monitor appointments with real-time updates.
+            </p>
+            <a href="{% url 'create_appointment' %}" class="btn btn-outline-primary mt-2">Book Appointment</a>
+        </div>
+    </div>
+</div>
+
+<!-- BENEFITS -->
+<div class="card mt-5 p-5 shadow-sm border-0">
+    <h3 class="text-center mb-4">Why Choose Lifespring?</h3>
+    <div class="row text-center">
+        <div class="col-md-3">
+            <h5>🔒 Secure</h5>
+            <p class="text-muted">Protected patient data and privacy compliance.</p>
+        </div>
+        <div class="col-md-3">
+            <h5>⚡ Fast</h5>
+            <p class="text-muted">Quick access to records and scheduling tools.</p>
+        </div>
+        <div class="col-md-3">
+            <h5>📊 Efficient</h5>
+            <p class="text-muted">Streamlined workflows for hospital staff.</p>
+        </div>
+        <div class="col-md-3">
+            <h5>🌐 Scalable</h5>
+            <p class="text-muted">Works for small clinics and large hospitals.</p>
+        </div>
+    </div>
+</div>
+
+<!-- STATS -->
+<div class="row text-center mt-5">
+    <div class="col-md-4">
+        <h2 class="fw-bold text-primary">1,200+</h2>
+        <p class="text-muted">Patients Managed</p>
+    </div>
+    <div class="col-md-4">
+        <h2 class="fw-bold text-primary">350+</h2>
+        <p class="text-muted">Appointments Booked</p>
+    </div>
+    <div class="col-md-4">
+        <h2 class="fw-bold text-primary">25+</h2>
+        <p class="text-muted">Doctors Available</p>
+    </div>
+</div>
+            {% endif %}
+
+            <!-- DOCTORS PAGE -->
+            {% if page == 'doctors' %}
+            <div class="container mt-4">
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0"><i class="bi bi-person-badge"></i> Doctors Directory</h2>
+                        <span class="badge bg-primary">{{ doctors|length }} Doctors</span>
+                    </div>
+                    
+                    {% if doctors %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Doctor Name</th>
+                                    <th>Specialization</th>
+                                    <th>Department</th>
+                                    <th>Contact</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doctor in doctors %}
+                                <tr>
+                                    <td><strong>Dr. {{ doctor.profile.user.get_full_name }}</strong></td>
+                                    <td><span class="badge bg-secondary">{{ doctor.specialization }}</span></td>
+                                    <td>{{ doctor.department }}</td>
+                                    <td>{{ doctor.phone|default:"—" }}</td>
+                                    <td>{{ doctor.email|default:"—" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-person-x fs-1 text-muted"></i>
+                        <p class="text-muted mt-3">No doctors registered yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- DASHBOARD PAGE -->
+            {% if page == 'dashboard' %}
+            <h2 class="mb-4">{{ role|title }} Dashboard</h2>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card text-bg-primary h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <i class="bi bi-person-badge fs-1"></i>
+                            <h6 class="mt-2">Total Doctors</h6>
+                            <h3 class="mb-0">{{ stats.doctors }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card text-bg-success h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <i class="bi bi-people fs-1"></i>
+                            <h6 class="mt-2">Total Patients</h6>
+                            <h3 class="mb-0">{{ stats.patients }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card text-bg-warning h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <i class="bi bi-calendar-check fs-1"></i>
+                            <h6 class="mt-2">Total Appointments</h6>
+                            <h3 class="mb-0">{{ stats.appointments }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if role == 'admin' %}
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="card text-bg-info h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <i class="bi bi-building fs-1"></i>
+                            <h6 class="mt-2">Active Admissions</h6>
+                            <h3 class="mb-0">{{ stats.admissions }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="card text-bg-danger h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <i class="bi bi-cash-stack fs-1"></i>
+                            <h6 class="mt-2">Unpaid Bills</h6>
+                            <h3 class="mb-0">{{ stats.unpaid }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-dark text-white"><i class="bi bi-person-badge"></i> Manage Doctors</div>
+                <div class="card-body">
+                    {% if doctors %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>Name</th><th>Email</th><th>Specialization</th><th>Phone</th></tr></thead>
+                            <tbody>
+                            {% for doc in doctors %}
+                            <tr>
+                                <td>Dr. {{ doc.profile.user.get_full_name }}</td>
+                                <td>{{ doc.profile.user.email }}</td>
+                                <td><span class="badge bg-secondary">{{ doc.specialization }}</span></td>
+                                <td>{{ doc.profile.phone }}</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No doctors yet.</p>
+                    {% endif %}
+                    <hr>
+                    <h6><i class="bi bi-plus-circle"></i> Add New Doctor</h6>
+                    <form method="post" action="{% url 'add_doctor' %}" class="row g-2">
+                        {% csrf_token %}
+                        {{ doctor_form.as_p }}
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Create Doctor</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+           {% if role == 'doctor' %}
+<div class="row g-3">
+    <div class="col-12 col-lg-7">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white"><i class="bi bi-calendar-check"></i> Today's Appointments</div>
+            <div class="card-body">
+                {% if appointments %}
+                <div class="list-group list-group-flush">
+                    {% for appt in appointments %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ appt.patient.name }}</h6>
+                            <small class="text-muted">{{ appt.date_time|date:"M d, Y H:i" }} • {{ appt.reason }}</small>
+                        </div>
+                        <a href="{% url 'create_consultation' appt.id %}" class="btn btn-sm btn-success">Consult</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                    No scheduled appointments for today.<br>
+                    <small class="text-secondary">Debug: Date = {{ debug_date }}, Count = {{ today_count }}</small>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-5">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-people"></i> My Assigned Patients</div>
+            <div class="card-body">
+                {% if patients %}
+                <ul class="list-group list-group-flush">
+                    {% for p in patients %}
+                    <li class="list-group-item">{{ p.name }} <span class="text-muted">• {{ p.patient_id }}</span></li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center py-3">No patients assigned yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+            {% if role == 'receptionist' %}
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white"><i class="bi bi-person-plus"></i> Register Patient</div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'add_patient' %}">
+                                {% csrf_token %}
+                                {{ patient_form.as_p }}
+                                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-success text-white"><i class="bi bi-calendar-plus"></i> Schedule Appointment</div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'create_appointment' %}">
+                                {% csrf_token %}
+                                {{ appointment_form.as_p }}
+                                <button type="submit" class="btn btn-success w-100"><i class="bi bi-save"></i> Schedule</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-warning"><i class="bi bi-building-add"></i> Admit Patient</div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'admit_patient' %}">
+                                {% csrf_token %}
+                                {{ admission_form.as_p }}
+                                <button type="submit" class="btn btn-warning w-100"><i class="bi bi-save"></i> Admit</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-dark text-white"><i class="bi bi-calendar-event"></i> Today's Appointments</div>
+                <div class="card-body">
+                    {% if appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Reason</th><th>Actions</th></tr></thead>
+                            <tbody>
+                            {% for appt in appointments %}
+                            <tr>
+                                <td><span class="badge bg-dark">{{ appt.date_time|date:"H:i" }}</span></td>
+                                <td>{{ appt.patient.name }}</td>
+                                <td>Dr. {{ appt.doctor.profile.user.get_full_name }}</td>
+                                <td>{{ appt.reason }}</td>
+                                <td>
+                                    <a href="{% url 'edit_appointment' appt.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteApptModal{{ appt.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No appointments today.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+           <!-- PATIENTS PAGE -->
+{% if page == 'patients' %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-people"></i> {% if role == 'doctor' %}My Patients{% else %}All Patients{% endif %}</h2>
+    {% if role == 'receptionist' %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+        <i class="bi bi-plus-circle"></i> Add Patient
+    </button>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if patients %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Gender</th>
+                        <th>Contact</th>
+                        <th>Registered</th>
+                        {% if role == 'receptionist' or role == 'admin' %}
+                        <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in patients %}
+                <tr>
+                    <td><code>{{ p.patient_id }}</code></td>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.age }}</td>
+                    <td>{{ p.gender }}</td>
+                    <td>{{ p.contact }}</td>
+                    <td>{{ p.created_at|date:"M d, Y" }}</td>
+                    {% if role == 'receptionist' or role == 'admin' %}
+                    <td>
+                        <a href="{% url 'edit_patient' p.id %}" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePatientModal{{ p.id }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-3">No patients registered yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+            <!-- ADMISSIONS PAGE -->
+{% if page == 'admissions' %}
+<h2 class="mb-4"><i class="bi bi-building"></i> Current Admissions</h2>
+<div class="card">
+    <div class="card-body">
+        {% if admissions %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead><tr><th>Patient</th><th>Ward</th><th>Doctor</th><th>Admitted</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                {% for adm in admissions %}
+                <tr>
+                    <td>{{ adm.patient.name }} <br><small class="text-muted">{{ adm.patient_id }}</small></td>
+                    <td>{{ adm.ward.name }}</td>
+                    <td>Dr. {{ adm.doctor.profile.user.get_full_name }}</td>
+                    <td>{{ adm.admission_date|date:"M d, Y" }}</td>
+                    <td><span class="badge bg-success">{{ adm.status|title }}</span></td>
+                    <td>
+                        {% if role == 'receptionist' or role == 'admin' %}
+                        <form method="post" action="{% url 'discharge_patient' adm.id %}" class="d-inline" onsubmit="return confirm('Discharge {{ adm.patient.name }} from {{ adm.ward.name }}?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-warning">
+                                <i class="bi bi-box-arrow-right"></i> Discharge
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-3">No current admissions.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+
+            <!-- INVOICES PAGE -->
+{% if page == 'invoices' %}
+<h2 class="mb-4"><i class="bi bi-receipt"></i> Billing / Invoices</h2>
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul"></i> All Invoices</span>
+        {% if role == 'receptionist' %}
+        <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#invoiceForm"><i class="bi bi-plus"></i> Create Invoice</button>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if role == 'receptionist' %}
+        <div class="collapse mb-3" id="invoiceForm">
+            <form method="post" action="{% url 'create_invoice' %}">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-md-6">{{ invoice_form.patient.label_tag }}{{ invoice_form.patient }}</div>
+                    <div class="col-md-6">{{ invoice_form.doctor.label_tag }}{{ invoice_form.doctor }}</div>
+                    <div class="col-md-4">{{ invoice_form.service_fee.label_tag }}{{ invoice_form.service_fee }}</div>
+                    <div class="col-md-4">{{ invoice_form.lab_fee.label_tag }}{{ invoice_form.lab_fee }}</div>
+                    <div class="col-md-4">{{ invoice_form.admission_fee.label_tag }}{{ invoice_form.admission_fee }}</div>
+                </div>
+                <button type="submit" class="btn btn-success mt-2"><i class="bi bi-check-circle"></i> Generate Invoice</button>
+            </form>
+            <hr>
+        </div>
+        {% endif %}
+
+        {% if invoices %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Invoice ID</th>
+                        <th>Patient</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td><code>{{ inv.invoice_id }}</code></td>
+                    <td>{{ inv.patient.name }}</td>
+                    <td><strong>${{ inv.total }}</strong></td>
+                    <td>
+                        {% if inv.status == 'paid' %}
+                        <span class="badge bg-success">Paid</span>
+                        {% else %}
+                        <span class="badge bg-danger">Unpaid</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ inv.date|date:"M d, Y" }}</td>
+                    <td>
+                        <a href="{% url 'invoice_pdf' inv.id %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i> PDF</a>
+                        
+                        {% if role == 'receptionist' and inv.status == 'unpaid' %}
+                        <form method="post" action="{% url 'mark_invoice_paid' inv.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <select name="payment_method" class="form-select form-select-sm d-inline w-auto" required>
+                                <option value="">Pay...</option>
+                                <option value="cash">Cash</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="pos">POS</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-success">Mark Paid</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-3">No invoices yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+           <!-- CONSULTATION PAGE -->
+{% if page == 'consultation' %}
+<h2 class="mb-4"><i class="bi bi-clipboard2-pulse"></i> Consultation - {{ appointment.patient.name }}</h2>
+<div class="card">
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6"><strong>Patient:</strong> {{ appointment.patient.name }} - {{ appointment.patient_id }}</div>
+            <div class="col-md-6"><strong>Doctor:</strong> Dr. {{ appointment.doctor.profile.user.get_full_name }}</div>
+            <div class="col-md-6"><strong>Date:</strong> {{ appointment.date_time|date:"M d, Y H:i" }}</div>
+            <div class="col-md-6"><strong>Reason:</strong> {{ appointment.reason }}</div>
+        </div>
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Consultation</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- EDIT PATIENT PAGE -->
+{% if page == 'edit_patient' %}
+<h2 class="mb-4"><i class="bi bi-pencil"></i> Edit Patient - {{ patient.name }}</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Update Patient</button>
+            <a href="{% url 'dashboard' %}?page=patients" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+
+
+
+<!-- EDIT APPOINTMENT PAGE -->
+{% if page == 'edit_appointment' %}
+<h2 class="mb-4"><i class="bi bi-pencil"></i> Edit Appointment</h2>
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-info">
+            <strong>Patient:</strong> {{ appointment.patient.name }} <br>
+            <strong>Current:</strong> {{ appointment.date_time|date:"M d, Y H:i" }}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Update Appointment</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if page == 'contact' %}
+
+<h2 class="mb-4">
+    <i class="bi bi-headset"></i> Contact & Support
+</h2>
+
+<div class="row g-3">
+
+    <!-- CONTACT INFO -->
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5 class="mb-3">Hospital Information</h5>
+
+                <p><i class="bi bi-geo-alt text-danger"></i>
+                    <strong>Address:</strong><br>
+                    123 Health Street, Lagos, Nigeria
+                </p>
+
+                <p><i class="bi bi-telephone text-primary"></i>
+                    <strong>Phone:</strong><br>
+                    +234 8126 185 380
+                </p>
+
+                <p><i class="bi bi-envelope text-success"></i>
+                    <strong>Email:</strong><br>
+                    info@lifespringmedical.com
+                </p>
+
+                <p><i class="bi bi-clock text-warning"></i>
+                    <strong>Emergency Hours:</strong><br>
+                    24/7 Emergency Service Available
+                </p>
+
+                <hr>
+
+                <div class="alert alert-danger mb-0">
+                    <strong>Emergency?</strong> Call us immediately for urgent care.
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT FORM -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-body">
+
+                <h5 class="mb-3">Send a Message</h5>
+
+                <form method="post" action="{% url 'contact' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-2">
+                        <input type="text"
+                               name="name"
+                               class="form-control"
+                               placeholder="Full Name"
+                               required>
+                    </div>
+
+                    <div class="mb-2">
+                        <input type="email"
+                               name="email"
+                               class="form-control"
+                               placeholder="Email Address"
+                               required>
+                    </div>
+
+                    <div class="mb-2">
+                        <textarea name="message"
+                                  class="form-control"
+                                  rows="5"
+                                  placeholder="Describe your issue or inquiry..."
+                                  required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-send"></i> Send Message
+                    </button>
+                </form>
+                  
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endif %}
+
+{% if page == 'about' %}
+
+<h2 class="mb-4">
+    <i class="bi bi-hospital"></i> About Lifespring Medical Center
+</h2>
+
+<!-- HERO CARD -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h3 class="text-primary">Lifespring Medical Center</h3>
+        <p class="text-muted mb-0">
+            A modern healthcare institution delivering quality, affordable, and patient-centered care.
+        </p>
+    </div>
+</div>
+
+<!-- MISSION / VISION -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5><i class="bi bi-bullseye text-primary"></i> Our Mission</h5>
+                <p>
+                    To deliver accessible, high-quality healthcare services with compassion,
+                    professionalism, and clinical excellence.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5><i class="bi bi-eye text-success"></i> Our Vision</h5>
+                <p>
+                    To become one of Nigeria’s leading healthcare providers through innovation,
+                    technology, and patient-centered care.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- SERVICES -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-activity"></i> Our Services
+    </div>
+    <div class="card-body">
+        <div class="row">
+
+            <div class="col-md-6">
+                <ul>
+                    <li>24/7 Emergency Care</li>
+                    <li>General Medicine & Surgery</li>
+                    <li>Pediatrics & Child Care</li>
+                </ul>
+            </div>
+
+            <div class="col-md-6">
+                <ul>
+                    <li>Laboratory Diagnostics</li>
+                    <li>Pharmacy Services</li>
+                    <li>Maternity & Obstetrics</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- STATS -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">2020</h3>
+                <p class="text-muted">Established</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">10,000+</h3>
+                <p class="text-muted">Patients Served</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">24/7</h3>
+                <p class="text-muted">Emergency Service</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- TRUST FOOTER -->
+<div class="card">
+    <div class="card-body text-center">
+        <h5 class="mb-2">Trusted Healthcare Provider</h5>
+        <p class="text-muted mb-0">
+            Lifespring Medical Center is committed to safe, ethical, and modern medical care.
+        </p>
+    </div>
+</div>
+
+{% endif %}
+{% if page == 'report' %}
+
+<h2 class="mb-4">
+    <i class="bi bi-bar-chart"></i> Hospital Analytics Report
+</h2>
+
+<!-- KPI CARDS -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="card text-bg-primary h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-people fs-1"></i>
+                <h6>Total Patients</h6>
+                <h3>{{ stats.patients }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-bg-success h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-check fs-1"></i>
+                <h6>Total Appointments</h6>
+                <h3>{{ stats.appointments }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-bg-warning h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-building fs-1"></i>
+                <h6>Active Admissions</h6>
+                <h3>{{ stats.admissions }}</h3>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ANALYTICS SECTION -->
+<div class="row g-3">
+
+    <!-- Patient Trend Chart -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Patient Activity Overview
+            </div>
+            <div class="card-body">
+                <canvas id="patientChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Stats -->
+    <div class="col-lg-4">
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="text-muted">Appointments Today</h6>
+                <h3>{{ stats.appointments }}</h3>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="text-muted">Active Admissions</h6>
+                <h3>{{ stats.admissions }}</h3>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Hospital Status</h6>
+                <span class="badge bg-success">Operational</span>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- QUICK SUMMARY TABLE -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-table"></i> Operational Summary
+    </div>
+    <div class="card-body">
+        <table class="table table-striped align-middle">
+            <tr>
+                <td>Total Registered Patients</td>
+                <td><strong>{{ stats.patients }}</strong></td>
+            </tr>
+            <tr>
+                <td>Appointments Today</td>
+                <td><strong>{{ stats.appointments }}</strong></td>
+            </tr>
+            <tr>
+                <td>Active Admissions</td>
+                <td><strong>{{ stats.admissions }}</strong></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+{% endif %}
+
+<!-- PATIENT BOOK APPOINTMENT PAGE -->
+{% if page == 'book' %}
+<h2 class="mb-4"><i class="bi bi-calendar-plus"></i> Book Appointment</h2>
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="{% url 'patient_book_appointment' %}">
+            {% csrf_token %}
+            {{ appointment_form.as_p }}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Book Appointment</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+
+<!-- PATIENT MY APPOINTMENTS PAGE -->
+{% if page == 'my_appointments' %}
+<h2 class="mb-4"><i class="bi bi-calendar-check"></i> My Appointments</h2>
+<div class="card">
+    <div class="card-body">
+        {% if appointments %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Doctor</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for appt in appointments %}
+                <tr>
+                    <td><span class="badge bg-dark">{{ appt.date_time|date:"M d, Y H:i" }}</span></td>
+                    <td>Dr. {{ appt.doctor.profile.user.get_full_name }}</td>
+                    <td>{{ appt.reason }}</td>
+                    <td>
+                        {% if appt.status == 'scheduled' %}
+                            <span class="badge bg-warning">Scheduled</span>
+                        {% elif appt.status == 'completed' %}
+                            <span class="badge bg-success">Completed</span>
+                        {% else %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if appt.status == 'scheduled' %}
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelApptModal{{ appt.id }}">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                        {% endif %}
+                        {% if appt.status == 'completed' %}
+                        <a href="{% url 'invoice_pdf' appt.consultation.invoice.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-download"></i> Receipt
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% else %}
+        <p class="text-muted text-center py-3">You have no appointments yet. 
+            <a href="{% url 'patient_dashboard' %}?page=book">Book one now</a>
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cancel Appointment Modals - MUST BE OUTSIDE THE TABLE -->
+{% for appt in appointments %}
+{% if appt.status == 'scheduled' %}
+<div class="modal fade" id="cancelApptModal{{ appt.id }}" tabindex="-1" aria-labelledby="cancelApptModalLabel{{ appt.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelApptModalLabel{{ appt.id }}">Cancel Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Cancel your appointment with <strong>Dr. {{ appt.doctor.profile.user.get_full_name }}</strong> on {{ appt.date_time|date:"M d, Y H:i" }}?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <form action="{% url 'cancel_appointment' appt.id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById('patientChart');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+            label: 'Patients',
+            data: [12, 19, 8, 15, 22, 30, 25],
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: true }
+        }
+    }
+});
+</script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+   
+</body>
+</html>

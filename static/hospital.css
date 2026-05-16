@@ -1,0 +1,197 @@
+
+/* =====================
+   BASE RESET
+===================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+
+  --radius: 14px;
+  --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+/* =====================
+   LAYOUT
+===================== */
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #f4f6fb 0%, #e8eef7 100%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Background hero wrapper - optional for full image backdrop */
+.bg-img {
+  background: linear-gradient(
+      120deg,
+      rgba(37, 99, 235, 0.75),
+      rgba(15, 23, 42, 0.75)
+    ),
+    url("https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=1920&q=80");
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+}
+
+/* =====================
+   SIDEBAR
+===================== */
+.sidebar {
+  width: 270px;
+  min-height: 100vh;
+  background: #0d1b2a; /* Deep medical blue - more professional */
+  color: white;
+  padding: 20px;
+  position: sticky;
+  top: 0;
+}
+
+.sidebar .nav-link {
+  color: #cbd5e1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.sidebar .nav-link.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); /* Subtle glow for active */
+}
+
+/* =====================
+   MAIN CONTENT
+===================== */
+.content {
+  flex-grow: 1;
+  background: transparent;
+  padding: 24px;
+}
+
+/* =====================
+   CARDS (modern UI)
+===================== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.12);
+}
+
+/* =====================
+   KPI CARDS
+===================== */
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.kpi-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+/* =====================
+   TYPOGRAPHY
+===================== */
+h1, h2, h3 {
+  font-weight: 600;
+}
+
+.text-muted {
+  color: var(--muted) !important;
+}
+
+/* =====================
+   FORMS
+===================== */
+.form-control,
+.form-select {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* =====================
+   BUTTONS
+===================== */
+.btn {
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: var(--primary);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: var(--primary-light);
+}
+
+/* =====================
+   TABLES
+===================== */
+.table {
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.table thead {
+  background: #f1f5f9;
+  font-size: 14px;
+}
+
+/* =====================
+   MOBILE
+===================== */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -270px;
+    transition: 0.3s;
+    z-index: 1050;
+  }
+
+  .sidebar.show {
+    left: 0;
+  }
+}
