@@ -1,112 +1,154 @@
-# 🏥 LifeSpring Medical Center - Hospital Management System
+# 🏥 LifeSpring Medical Center — Hospital Management System
 
-A Django-based Hospital Management System designed to manage patients, doctors, appointments, admissions, consultations, and billing in a hospital environment.
+A Django-based Hospital Management System designed to help manage hospital operations including patients, doctors, appointments, admissions, consultations, prescriptions, laboratory services, pharmacy operations, and billing.
 
----
+## 📌 Project Overview
 
-# 📌 Features
+LifeSpring Medical Center is a database-driven web application developed with Django to provide a centralized platform for managing different hospital workflows.
 
-## 👥 User Roles
+The system uses role-based access control to provide different functionality for administrators, receptionists, doctors, nurses, and other hospital staff.
 
-### 1. Admin
-- Manage doctors and hospital staff
-- View all system records
-- Monitor appointments and admissions
+## ✨ Key Features
 
-### 2. Receptionist
+### 👥 User & Role Management
+
+The system supports different user roles with role-specific access:
+
+- **Admin** — Manage hospital staff and monitor system records.
+- **Receptionist** — Register patients, manage appointments, admissions, and billing.
+- **Doctor** — View appointments, access patient information, create consultations and prescriptions.
+- **Nurse** — Access relevant patient and ward information.
+- **Laboratory Staff** — Manage laboratory test requests and results.
+- **Patient** — Book appointments and view appointment history.
+
+### 👤 Patient Management
+
 - Register new patients
-- Schedule and manage appointments
-- Admit and discharge patients
-- Generate invoices and billing records
+- Edit patient information
+- View patient details and history
+- Manage patient records
+- Assign relevant hospital staff
 
-### 3. Doctor
-- View today's appointments
-- Access patient information
-- Create consultations and prescriptions
+### 👨‍⚕️ Doctor Management
 
-### 4. Patient
-- Book appointments
-- View appointment history
-- Cancel appointments
+- Manage doctor records
+- Assign doctors to patients and appointments
+- Manage doctor-related hospital workflows
 
----
+### 📅 Appointment Management
 
-# 🏥 Core Modules
+- Schedule appointments
+- View upcoming appointments
+- Manage appointment status
+- Cancel or reschedule appointments
+- Track appointment history
 
-## Patient Management
-- Register new patients
-- Edit patient details
-- Delete patient records
-- View patient history
+### 🏥 Admission Management
 
-## Doctor Management
-- Add, edit, delete doctors
-- Assign departments and schedules
-
-## Appointment Scheduling
-- Book appointments
-- Reschedule or cancel appointments
-- Track appointment status
-
-## Admission Management
-- Admit patients into wards
-- Assign beds and rooms
+- Admit patients
+- Assign wards
+- Assign doctors
+- Track active admissions
 - Discharge patients
+- Manage admission information
 
-## Billing System
+### 🩺 Medical Records & Consultations
+
+- Record patient consultations
+- Record diagnoses
+- Add clinical notes
+- Maintain patient medical history
+- Create prescriptions
+
+### 💊 Prescription & Pharmacy Management
+
+- Create prescriptions
+- Manage prescription items
+- Manage medicines
+- Monitor medicine stock
+- Identify low-stock medicines
+- Monitor medicine expiry dates
+
+### 🧪 Laboratory Management
+
+- Create laboratory test requests
+- Record sample information
+- Track test status
+- Manage test results
+- Add laboratory remarks
+
+### 💳 Billing & Invoices
+
 - Create invoices
-- Track payments
-- Generate PDF invoices (ReportLab)
+- Manage hospital charges
+- Track payment status
+- Record payments
+- Generate PDF invoices using ReportLab
 
-## Consultation System
-- Doctors record diagnoses
-- Add prescriptions and notes
-- Maintain medical history
+### 📊 Dashboard
 
----
+The system includes dashboard interfaces for monitoring important hospital activities and providing users with quick access to relevant information.
 
-# 💻 Tech Stack
 
-- Python 3.14+
-- Django 5.0
-- SQLite / PostgreSQL
-- Bootstrap 5
-- ReportLab (PDF generation)
-- HTML, CSS, JavaScript
 
----
+## 🛠️ Technologies
 
-# 📂 Project Structure
+- **Python**
+- **Django**
+- **SQLite**
+- **HTML5**
+- **CSS3**
+- **JavaScript**
+- **Bootstrap**
+- **Django ORM**
+- **ReportLab**
+- **Git & GitHub**
+
+
+
+## 🔐 Authentication & Security
+
+The application includes:
+
+- User authentication
+- Login and logout functionality
+- Role-based access control
+- Protected views
+- Form validation
+- Permission-based functionality
+
+
+
+## 📂 Project Structure
+
+
 HOSPITAL-STRUCTURE/
 │
 ├── core/
-│ ├── static/
-│ │ └── hospital.css
-│ │
-│ ├── templates/
-│ │ └── core/
+│   ├── static/
+│   │   └── hospital.css
+│   └── templates/
+│       └── core/
 │
 ├── ward/
-│ ├── migrations/
-│ ├── templates/
-│ │ └── ward/
-│ │ ├── home.html
-│ │ ├── login.html
-│ │ ├── nurse_dashboard.html
-│ │ ├── register.html
-│ │
-│ ├── admin.py
-│ ├── apps.py
-│ ├── decorators.py
-│ ├── forms.py
-│ ├── models.py
-│ ├── tests.py
-│ ├── urls.py
-│ ├── utils.py
-│ ├── views.py
+│   ├── migrations/
+│   ├── templates/
+│   │   └── ward/
+│   │       ├── home.html
+│   │       ├── login.html
+│   │       ├── nurse_dashboard.html
+│   │       └── register.html
+│   │
+│   ├── admin.py
+│   ├── apps.py
+│   ├── decorators.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── utils.py
+│   └── views.py
 │
-├── venv/
-├── db.sqlite3
 ├── manage.py
 ├── requirements.txt
 ├── .gitignore
