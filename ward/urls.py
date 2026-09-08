@@ -53,16 +53,18 @@ urlpatterns = [
     # ================================
     #      APPOINTMENTS
     # ================================
-    path('appointments/create/', views.create_appointment, name='create_appointment'),
-    path('appointments/edit/<int:appointment_id>/', views.edit_appointment, name='edit_appointment'),
-    path('appointments/delete/<int:appointment_id>/', views.delete_appointment, name='delete_appointment'),
-    path('patients/<int:pk>/', views.patient_detail, name='patient_detail'),  # <-- ADD THIS
+   path('appointments/create/', views.create_appointment, name='create_appointment'),
+   path('appointments/edit/<int:appointment_id>/', views.edit_appointment, name='edit_appointment'),
+   path('appointments/delete/<int:appointment_id>/', views.delete_appointment, name='delete_appointment'),
+   path('appointments/<int:appointment_id>/consultation/', views.create_consultation, name='create_consultation'),
+   path('appointments/<int:appointment_id>/consultation/view/', views.view_consultation, name='view_consultation'),
+   path('patients/<int:pk>/', views.patient_detail, name='patient_detail'),  # <-- ADD THIS
     
        
     # ================================
     # ADMISSIONS
     # ================================
-    path('admissions/admit/', views.admit_patient, name='admit_patient'),
+    path('admissions/',views.admissions_view,name='admissions'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('edit_admission/',views.edit_admission,name='edit_admission'), # same view handles edit POST
    
@@ -70,6 +72,8 @@ urlpatterns = [
     # CONSULTATIONS
     # ================================
     path('consultation/<int:appointment_id>/', views.create_consultation, name='create_consultation'),
+    path('consultation/<int:appointment_id>/create/', views.create_consultation, name='create_consultation'),
+    path('consultation/<int:appointment_id>/view/', views.view_consultation, name='view_consultation'),
 
     # ================================
     # MEDICAL RECORDS

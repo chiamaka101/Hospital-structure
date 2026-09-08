@@ -23,9 +23,9 @@ import base64
 from datetime import timedelta
 
 from .models import *
-from .models import Medicine, Prescription, Invoice
-from .forms import LaboratoryTestForm
-from .forms import *
+from .models import Medicine, Prescription, Invoice  
+from .forms import *  
+from .forms import LaboratoryTestForm, DoctorCreateForm, DoctorEditForm, ConsultationForm 
 from .decorators import role_required
 from .utils import (
     notify_patient_registered,
@@ -92,22 +92,50 @@ def login_view(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        user = authenticate(request, username=email, password=password)
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '')
 
-        if user:
+        # Find the account using the email address
+        try:
+            user_obj = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            user_obj = None
+        except User.MultipleObjectsReturned:
+            messages.error(
+                request,
+                'Multiple accounts are using this email address.'
+            )
+            return render(request, 'ward/login.html')
+
+        # Authenticate using the actual Django username
+        user = None
+
+        if user_obj:
+            user = authenticate(
+                request,
+                username=user_obj.username,
+                password=password
+            )
+
+        if user is not None:
             login(request, user)
-            log_activity(user, 'Logged in')
+
+            try:
+                log_activity(user, 'Logged in')
+            except Exception:
+                pass
 
             role = get_role(user)
+
             if role == 'patient':
                 return redirect('patient_dashboard')
+
             elif role == 'nurse':
                 return redirect('nurse_dashboard')
+
             return redirect('dashboard')
-        else:
-            messages.error(request, 'Invalid email or password')
+
+        messages.error(request, 'Invalid email or password.')
 
     return render(request, 'ward/login.html')
 
@@ -248,15 +276,18 @@ def export_report_csv(request):
     
     return response
 # =========================================================
-# DASHBOARD - FIXED WITH DAILY DATA + UNPAID ₦
+# DASHBOARD - FIXED WITH DAILY DATA + UNPAID ₦ + CONSULTATION
 # =========================================================
-@login_required(login_url='login')
+@login_required(login_url='login') 
 def dashboard(request):
     role = get_role(request.user)
     today = timezone.now().date()
     yesterday = today - timedelta(days=1)
     now = timezone.now()
+    
+    # 1. FIX: Extract appointment_id at the top of the view
     page = request.GET.get('page', 'dashboard')
+    appointment_id = request.GET.get('appointment_id')
     doctor = get_doctor_profile(request.user)
 
     # Base querysets per role
@@ -302,6 +333,13 @@ def dashboard(request):
     # Notifications
     notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')[:5]
 
+    # Today's appointments & recent patients querysets
+    today_apts_qs = appointments_qs.filter(date_time__date=today).select_related('patient', 'doctor__profile__user').order_by('date_time')
+    recent_patients_qs = patients_qs.order_by('-created_at')[:5]
+
+    # Pending consultations count
+    pending_consultations_count = appointments_qs.filter(status='scheduled').count()
+
     context = {
         'page': page,
         'role': role,
@@ -310,6 +348,15 @@ def dashboard(request):
         'activities': activities,
         'notifications': notifications,
         'unread_count': notifications.count(),
+
+        # Doctor Dashboard Template Direct Variables
+        'doctor_patient_count': patients_qs.count(),
+        'doctor_today_appointments': appointments_today,
+        'doctor_active_admissions': active_admissions,
+        'doctor_pending_consultations': pending_consultations_count,
+        'doctor_appointments_today': today_apts_qs,
+        'doctor_recent_patients': recent_patients_qs,
+
         'stats': {
             'patients': patients_qs.count(),
             'patients_today': patients_today,
@@ -321,11 +368,11 @@ def dashboard(request):
             'unpaid_count': unpaid_count,
             'paid_today': paid_today,
             'doctors_on_duty': Doctor.objects.count(),
-            'available_beds': 14,  # Replace with Ward.objects.aggregate beds logic
+            'available_beds': 14,  
             'departments_open': 6,
         },
-        'today_appointments': appointments_qs.filter(date_time__date=today).select_related('patient', 'doctor__profile__user').order_by('date_time'),
-        'recent_patients': patients_qs.filter(created_at__date=today).order_by('-created_at')[:5],
+        'today_appointments': today_apts_qs,
+        'recent_patients': recent_patients_qs,
         'recent_admissions': admissions_qs.filter(admission_date__date=today).select_related('patient', 'ward').order_by('-admission_date')[:5],
     }
 
@@ -370,13 +417,8 @@ def dashboard(request):
         context['patient_form'] = PatientForm()
 
     elif page == 'appointments':
-        appointments = appointments_qs.order_by('-date_time')
-        status = request.GET.get('status')
-        search = request.GET.get('search')
-
+        appointments = appointments_qs.select_related('patient', 'doctor__profile__user').order_by('-date_time')
         
-
-
         search_query = request.GET.get('search', '').strip()
         if search_query:
             appointments = appointments.filter(
@@ -385,11 +427,52 @@ def dashboard(request):
                 Q(doctor__profile__user__username__icontains=search_query) |
                 Q(patient__name__icontains=search_query)  
             )
+        
+        status = request.GET.get('status')
+        if status:
+            appointments = appointments.filter(status=status)
 
         paginator = Paginator(appointments, 10) 
         page_num = request.GET.get('page_num', 1)
+        
         context['appointments'] = paginator.get_page(page_num)
         context['appointment_form'] = AppointmentForm()
+
+    elif page == 'consultation' and appointment_id:
+        appointment = Appointment.objects.filter(id=appointment_id).first()
+        if not appointment:
+            messages.error(request, 'Appointment not found.')
+            return redirect('/dashboard/?page=appointments')
+
+        if request.method == 'POST':
+            form = ConsultationForm(request.POST)
+            if form.is_valid():
+                consultation = form.save(commit=False)
+                consultation.appointment = appointment
+                consultation.patient = appointment.patient
+                consultation.doctor = appointment.doctor
+                consultation.save()
+
+                messages.success(
+                    request,
+                    'Consultation completed successfully.'
+                )
+                return redirect('/dashboard/?page=appointments')
+        else:
+            form = ConsultationForm()
+
+        context['appointment'] = appointment
+        context['form'] = form
+
+    elif page == 'view_consultation' and appointment_id:
+        appointment = Appointment.objects.filter(id=appointment_id).first()
+        if not appointment:
+            messages.error(request, 'Appointment not found.')
+            return redirect('/dashboard/?page=appointments')
+            
+        context['appointment'] = appointment
+        context['consultation'] = getattr(appointment, 'consultation', None)
+        return render(request, 'ward/home.html', context)
 
     elif page == 'create_appointment':
         context['appointment_form'] = AppointmentForm()
@@ -400,6 +483,10 @@ def dashboard(request):
 
         if not appointment:
             messages.error(request, 'Appointment not found.')
+            return redirect('/dashboard/?page=appointments')
+
+        if role == 'doctor' and doctor and appointment.doctor != doctor:
+            messages.error(request, 'You can only edit your own appointments.')
             return redirect('/dashboard/?page=appointments')
 
         if request.method == 'POST':
@@ -414,273 +501,8 @@ def dashboard(request):
         context['appointment'] = appointment
         context['appointment_form'] = appointment_form
 
-    elif page == 'medical_records':
-        if role == 'doctor' and doctor:
-            records = MedicalRecord.objects.filter(doctor=doctor).select_related('patient', 'doctor').order_by('-created_at')
-            record_form = MedicalRecordForm(user=request.user)
-        else:
-            records = MedicalRecord.objects.select_related('patient', 'doctor').order_by('-created_at')
-            record_form = None
-        
-        # Attach prescriptions for each record
-        for rec in records:
-            rec.prescriptions_list = Prescription.objects.filter(patient=rec.patient).order_by('-date_issued')[:5]
-        context['medical_records'] = records
-        context['record_form'] = record_form
-
-    elif page == 'prescriptions':
-        if role == 'doctor' and doctor:
-            context['prescriptions'] = Prescription.objects.filter(doctor=doctor).order_by('-date_issued')
-        else:
-            context['prescriptions'] = Prescription.objects.all().order_by('-date_issued')
-        context['prescription_form'] = PrescriptionForm()
-
-    elif page == 'create_prescription':
-        context['prescription_form'] = PrescriptionForm()
-
-    elif page == 'edit_invoice':
-        invoice_id = request.GET.get('id')
-        invoice = Invoice.objects.filter(id=invoice_id).first()
-
-        if not invoice:
-            messages.error(request, 'Invoice not found.')
-            return redirect('/dashboard/?page=invoices')
-
-        if request.method == 'POST':
-            form = InvoiceForm(request.POST, instance=invoice, user=request.user)
-            if form.is_valid():
-                form.save()
-                messages.success(request, f'Invoice {invoice.invoice_id} updated successfully.')
-                return redirect('/dashboard/?page=invoices')
-        else:
-            form = InvoiceForm(instance=invoice, user=request.user)
-        
-        context['invoice'] = invoice
-        context['form'] = form
-
-    elif page == 'invoices':
-        base_qs = Invoice.objects.select_related('patient', 'doctor__profile__user')
-      
-        if role == 'doctor' and doctor:
-            invoices_qs = base_qs.filter(doctor=doctor)
-        else:
-            invoices_qs = base_qs.all()
-      
-        invoices_qs = invoices_qs.order_by('-date')
-      
-        # Calculate total on the fly: admission_fee + consultation + lab_fee + service_fee
-        total_expr = ExpressionWrapper(
-            F('admission_fee') + F('consultation') + F('lab_fee') + F('service_fee'),
-            output_field=DecimalField(max_digits=12, decimal_places=2)
-        )
-      
-        # KPI calculations
-        total_revenue = invoices_qs.aggregate(total=Sum(total_expr))['total'] or 0
-      
-        today_dt = timezone.now()
-        paid_this_month = invoices_qs.filter(
-            status='paid',
-            date__month=today_dt.month,
-            date__year=today_dt.year
-        ).aggregate(total=Sum(total_expr))['total'] or 0
-      
-        outstanding = invoices_qs.filter(
-            Q(status='unpaid') | Q(status='partial')
-        ).aggregate(total=Sum(total_expr))['total'] or 0
-      
-        # Annotate each invoice with total for template
-        invoices_qs = invoices_qs.annotate(invoice_total=total_expr)
-      
-        context.update({
-            'role': role,
-            'invoices': invoices_qs,
-            'invoice_form': InvoiceForm(user=request.user),
-            'total_revenue': total_revenue,
-            'paid_this_month': paid_this_month,
-            'outstanding': outstanding,
-        })
-
-    elif page == 'create_invoice':
-        if role not in ['receptionist', 'admin']:
-            messages.error(request, 'Access denied')
-            return redirect('/dashboard/?page=invoices')
-            
-        if request.method == 'POST':
-            form = InvoiceForm(request.POST, user=request.user)
-            if form.is_valid():
-                invoice = form.save(commit=False)
-                if role == 'doctor' and doctor:
-                    invoice.doctor = doctor
-                invoice.save()
-                notify_invoice_created(invoice)
-                log_activity(request.user, f'Created invoice {invoice.invoice_id}', invoice)
-                messages.success(request, f'Invoice {invoice.invoice_id} created. Total: ₦{invoice.total:,.2f}')
-                return redirect('invoice_pdf', invoice_id=invoice.id)
-            else:
-                messages.error(request, f'Errors: {form.errors}')
-        else:
-            form = InvoiceForm(user=request.user)
-            
-        context['form'] = form
-        context['role'] = role
-
-    elif page == 'pharmacy':
-        # 1. Top Statistics Cards Data
-        context['total_medicines'] = Medicine.objects.count()
-        context['active_prescriptions'] = Prescription.objects.filter(status='Pending').count()
-        context['low_stock_count'] = Medicine.objects.filter(quantity_in_stock__lte=15).count()
-        
-        # Calculate revenue today
-        context['revenue_today'] = Invoice.objects.filter(
-            status='paid',
-            paid_at__date=today
-        ).aggregate(
-            total=Sum(F('admission_fee') + F('consultation') + F('lab_fee') + F('service_fee'))
-        )['total'] or 0
-
-        # 2. Tables Data
-        context['pending_prescriptions'] = Prescription.objects.filter(status='Pending').order_by('-date_issued')[:5]
-        context['medicines'] = Medicine.objects.all().order_by('name')
-        context['medicine_form'] = MedicineForm()
-        # 3. Low Stock & Expiry Alerts
-        context['low_stock_medicines'] = Medicine.objects.filter(quantity_in_stock__lte=15)
-        context['expiring_medicines'] = Medicine.objects.filter(
-            expiry_date__range=[today, today + timezone.timedelta(days=90)]
-        ).order_by('expiry_date') 
-
-        return render(request, 'ward/home.html', context)
-
-    elif page == 'create_test_request':
-        if request.method == 'POST':
-            form = LaboratoryTestForm(request.POST)
-            if form.is_valid():
-                form.save()
-                return redirect('/dashboard/?page=laboratory')
-        else:
-            form = LaboratoryTestForm()
-        
-        context['lab_form'] = form
-        context['page'] = 'create_test_request'
-        return render(request, "ward/home.html", context)
-
-    elif page == 'laboratory':
-        lab_requests = LaboratoryTest.objects.select_related(
-            'patient',
-            'doctor__profile__user'
-        ).order_by('-id')
-
-        context.update({
-            'lab_requests': lab_requests,
-            'pending_tests_count': lab_requests.filter(status='Pending').count(),
-            'processing_tests_count': lab_requests.filter(status='Processing').count(),
-            'completed_today_count': lab_requests.filter(
-                status='Completed',
-                completed_date__date=timezone.now().date()
-            ).count(),
-            'urgent_tests_count': lab_requests.filter(priority='Critical').count(),
-        })
-
-        return render(request, 'ward/home.html', context)
-        
     elif page == 'admissions':
-        if request.method == 'POST':
-            if 'admit_patient' in request.POST:
-                form = AdmissionForm(request.POST)
-                if form.is_valid():
-                    admission = form.save(commit=False)
-                    admission.diagnosis = request.POST.get('diagnosis', '')
-                    admission.status = 'admitted'
-                    admission.admission_date = request.POST.get('admission_date')
-                    admission.save()
-                    messages.success(request, 'Patient admitted successfully')
-                    return redirect('/dashboard/?page=admissions')
-                else:
-                    messages.error(request, 'Please fill all required fields')
-            
-            if 'edit_admission' in request.POST or 'edit_id' in request.POST:
-                admission = Admission.objects.filter(id=request.POST.get('edit_id')).first()
-                if admission:
-                    admission.ward_id = request.POST.get('ward')
-                    admission.doctor_id = request.POST.get('doctor')
-                    admission.diagnosis = request.POST.get('diagnosis', '')
-                    admission.reason = request.POST.get('reason', '')
-                    admission.save()
-                    messages.success(request, 'Admission updated successfully')
-                else:
-                    messages.error(request, 'Admission record not found')
-                return redirect('/dashboard/?page=admissions')
-            
-            if 'discharge' in request.POST:
-                admission = Admission.objects.filter(id=request.POST.get('discharge_id'), status='admitted').first()
-                if admission:
-                    admission.status = 'discharged'
-                    admission.discharge_date = timezone.now()
-                    admission.save()
-                    messages.success(request, 'Patient discharged successfully')
-                else:
-                    messages.error(request, 'Admission not found or already discharged')
-                return redirect('/dashboard/?page=admissions')
-        
-        admissions_qs = Admission.objects.select_related(
-            'patient', 'ward', 'doctor', 'doctor__profile', 'doctor__profile__user'
-        ).order_by('-admission_date')
-        
-        q = request.GET.get('q')
-        ward_id = request.GET.get('ward')
-        status = request.GET.get('status')
-        start_date = request.GET.get('start_date')
-        
-        if q:
-            admissions_qs = admissions_qs.filter(
-                Q(patient__name__icontains=q) | 
-                Q(doctor__profile__user__first_name__icontains=q) |
-                Q(doctor__profile__user__last_name__icontains=q) |
-                Q(ward__name__icontains=q)
-            )
-        if ward_id:
-            admissions_qs = admissions_qs.filter(ward_id=ward_id)
-        if status:
-            admissions_qs = admissions_qs.filter(status=status)
-        if start_date:
-            admissions_qs = admissions_qs.filter(admission_date__date=start_date)
-        
-        total_admissions = Admission.objects.count()
-        admitted_count = Admission.objects.filter(status='admitted').count()
-        discharged_today = Admission.objects.filter(status='discharged', discharge_date__date=timezone.now().date()).count()
-        emergency_count = Admission.objects.filter(ward__name__icontains='Emergency', status='admitted').count()
-        pending_discharge = Admission.objects.filter(status='admitted', discharge_date__isnull=True).count()
-        
-        recent_admissions = Admission.objects.select_related('patient', 'ward').order_by('-admission_date')[:5]
-        
-        total = total_admissions
-        ward_stats = []
-        colors = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#ec4899']
-        for i, w in enumerate(Ward.objects.all().order_by('name')):
-            count = Admission.objects.filter(ward=w).count()
-            percent = round(count / total * 100, 1) if total > 0 else 0
-            ward_stats.append({
-                'ward__name': w.name, 
-                'count': count, 
-                'percent': percent, 
-                'color': colors[i % len(colors)]
-            })
-        
-        context.update({
-            'role': role,
-            'admissions': admissions_qs,
-            'admission_form': AdmissionForm(),
-            'patients': Patient.objects.all().order_by('name'),
-            'wards': Ward.objects.all().order_by('name'),
-            'doctors': Doctor.objects.select_related('profile', 'profile__user').filter(profile__role='doctor').order_by('profile__user__first_name'),
-            'total_admissions': total_admissions,
-            'admitted_count': admitted_count,
-            'discharged_today': discharged_today,
-            'emergency_count': emergency_count,
-            'pending_discharge': pending_discharge,
-            'recent_admissions': recent_admissions,
-            'ward_stats': ward_stats,
-            'now': timezone.now()
-        })
+        pass
 
     elif page == 'notifications':
         context['notifications'] = Notification.objects.filter(
@@ -691,7 +513,82 @@ def dashboard(request):
         context['role'] = role
         context['profile_form'] = ProfileForm(instance=request.user.profile, user=request.user)
 
-    # Executed for pages without an early return
+    return render(request, 'ward/home.html', context)
+
+# =========================================================
+# CONSULTATION VIEWS (UPDATED WITHOUT 404)
+# =========================================================
+@login_required
+def create_consultation(request, appointment_id):
+    # Filter instead of get_object_or_404
+    appointment = Appointment.objects.filter(id=appointment_id).first()
+    if not appointment:
+        messages.error(request, 'Appointment not found.')
+        return redirect('/dashboard/?page=appointments')
+
+    profile = request.user.profile
+    role = profile.role
+
+    if role == 'doctor' and appointment.doctor != profile:
+        messages.error(request, 'You can only consult your assigned patients.')
+        return redirect('/dashboard/?page=appointments')
+
+    if hasattr(appointment, 'consultation'):
+        messages.info(request, 'Consultation already exists for this appointment.')
+        return redirect('view_consultation', appointment_id=appointment.id)
+
+    if request.method == 'POST':
+        form = ConsultationForm(request.POST)
+        if form.is_valid():
+            consultation = form.save(commit=False)
+            consultation.appointment = appointment
+            consultation.doctor = profile
+            consultation.save()
+            
+            appointment.status = 'completed'
+            appointment.save()
+            
+            messages.success(request, f'Consultation for {appointment.patient.name} completed successfully.')
+            return redirect('view_consultation', appointment_id=appointment.id)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ConsultationForm()
+
+    context = {
+        'form': form,
+        'appointment': appointment,
+        'page': 'consultation',
+        'role': role,
+    }
+    return render(request, 'ward/home.html', context)
+
+@login_required
+def view_consultation(request, appointment_id):
+    # Filter instead of get_object_or_404
+    appointment = Appointment.objects.filter(id=appointment_id).first()
+    if not appointment:
+        messages.error(request, 'Appointment not found.')
+        return redirect('/dashboard/?page=appointments')
+
+    profile = request.user.profile
+    role = profile.role
+
+    if role == 'doctor' and appointment.doctor != profile:
+        messages.error(request, 'You do not have permission to view this consultation.')
+        return redirect('/dashboard/?page=appointments')
+        
+    consultation = getattr(appointment, 'consultation', None)
+    if not consultation:
+        messages.warning(request, 'No consultation found for this appointment.')
+        return redirect('/dashboard/?page=appointments')
+
+    context = {
+        'appointment': appointment,
+        'consultation': consultation,
+        'page': 'view_consultation',
+        'role': role,
+    }
     return render(request, 'ward/home.html', context)
 # =========================================================
 # NURSE DASHBOARD
@@ -729,7 +626,7 @@ def doctor_list(request):
 @role_required(['admin'])
 def add_doctor(request):
     if request.method == 'POST':
-        form = DoctorForm(request.POST)
+        form = DoctorCreateForm(request.POST)
         if form.is_valid():
             doctor = form.save()
             log_activity(request.user, 'Added doctor', doctor)
@@ -746,7 +643,7 @@ def edit_doctor(request, doctor_id):
         return redirect('doctor_list')
 
     if request.method == 'POST':
-        form = DoctorForm(request.POST, instance=doctor)
+        form = DoctorEditForm(request.POST, instance=doctor)
         if form.is_valid():
             form.save()
             log_activity(request.user, 'Edited doctor', doctor)
@@ -755,7 +652,7 @@ def edit_doctor(request, doctor_id):
     
     return render(request, 'ward/home.html', {
         'page': 'edit_doctor',
-        'doctor_form': DoctorForm(instance=doctor),
+        'doctor_form': DoctorEditForm(instance=doctor),
         'doctor': doctor,
         'role': get_role(request.user),
     })
@@ -821,9 +718,9 @@ def edit_patient(request, patient_id):
     
     return render(request, 'ward/home.html', {
         'page': 'edit_patient',
-        'patient_form': form,
+        'patient_form': form,                                        
         'patient': patient,
-        'role': role,
+        'role': role,      
     })
 
 @login_required(login_url='login')
@@ -842,68 +739,208 @@ def delete_patient(request, patient_id):
 # APPOINTMENTS - Receptionist/Admin/Doctor
 # =========================================================
 
-@login_required(login_url='login')
-@role_required(['receptionist', 'admin', 'doctor'])
+@login_required
 def create_appointment(request):
+    role = get_role(request.user)
+    
+    if role not in ['admin', 'receptionist']:
+        messages.error(request, 'Only Admin/Receptionist can book appointments.')
+        return redirect('/dashboard/?page=appointments')
+
     if request.method == 'POST':
         form = AppointmentForm(request.POST)
-
         if form.is_valid():
             appointment = form.save(commit=False)
-
+            appointment.created_by = request.user
+            
+            # HANDLE NEW PATIENT CREATION - FIXED
             new_name = form.cleaned_data.get('new_patient_name', '').strip()
-            new_age = form.cleaned_data.get('new_patient_age')
-            new_gender = form.cleaned_data.get('new_patient_gender')
-
-            if new_name and not form.cleaned_data.get('patient'):
-                patient = Patient.objects.create(
+            existing_patient = form.cleaned_data.get('patient')
+            
+            if new_name and not existing_patient:
+                new_patient = Patient.objects.create(
                     name=new_name,
-                    age=new_age,
-                    gender=new_gender or 'Other',
-                    contact='',
-                    address='',
+                    age=form.cleaned_data.get('new_patient_age'),
+                    gender=form.cleaned_data.get('new_patient_gender'),
+                    contact=form.cleaned_data.get('new_patient_contact', ''),
+                    address=form.cleaned_data.get('new_patient_address', ''),
                     created_by=request.user
                 )
-                appointment.patient = patient
-
-                log_activity(
-                    request.user,
-                    f"Registered patient {patient.name} ({patient.patient_id})",
-                    patient
-                )
-
-            appointment.created_by = request.user
-            appointment.save()
-
-            Notification.objects.create(
-                user=request.user,
-                message=f"Appointment scheduled for {appointment.patient.name} with Dr. {appointment.doctor.profile.user.get_full_name() or appointment.doctor.profile.user.username}"
-            )
-
-            notify_appointment_scheduled(appointment)
-
-            log_activity(
-                request.user,
-                f"Created appointment for {appointment.patient.name} with Dr. {appointment.doctor.profile.user.get_full_name() or appointment.doctor.profile.user.username}",
-                appointment
-            )
-
-            messages.success(request, "Appointment created successfully.")
-            return redirect('/dashboard/?page=appointments')
-
-        else:
-            messages.error(request, "Please fix the errors below.")
+                appointment.patient = new_patient
+            elif existing_patient:
+                appointment.patient = existing_patient
+            else:
+                messages.error(request, 'Please select a patient or enter new patient details.')
+                context = {'appointment_form': form, 'page': 'create_appointment', 'role': role}
+                return render(request, 'ward/home.html', context)
             
+            appointment.save()
+            messages.success(request, f'Appointment booked for {appointment.patient.name}')
+            return redirect('/dashboard/?page=appointments')
+        else:
+            messages.error(request, f'Please fix errors: {form.errors}')
     else:
         form = AppointmentForm()
 
-    return render(request, 'ward/home.html', {
-        'page': 'create_appointment',
+    context = {
         'appointment_form': form,
-        'role': get_role(request.user),
-    })
+        'page': 'create_appointment',
+        'role': role,
+    }
+    return render(request, 'ward/home.html', context)
+@login_required
+def create_consultation(request, appointment_id):
+    appointment = Appointment.objects.select_related(
+        'patient',
+        'doctor__profile__user'
+    ).filter(id=appointment_id).first()
 
+    if not appointment:
+        messages.error(request, 'Appointment not found.')
+        return redirect('/dashboard/?page=appointments')
+
+    profile = request.user.profile
+    role = str(profile.role).lower().strip()
+
+    # ---------------------------------------------------------
+    # SECURITY: Only the assigned doctor can start consultation
+    # ---------------------------------------------------------
+    if role == 'doctor':
+        assigned_doctor_user_id = appointment.doctor.profile.user_id
+
+        if assigned_doctor_user_id != request.user.id:
+            messages.error(
+                request,
+                'You can only consult patients assigned to you.'
+            )
+            return redirect('/dashboard/?page=appointments')
+
+    # ---------------------------------------------------------
+    # Prevent duplicate consultation
+    # ---------------------------------------------------------
+    if hasattr(appointment, 'consultation'):
+        messages.info(
+            request,
+            'Consultation already exists for this appointment.'
+        )
+        return redirect(
+            'view_consultation',
+            appointment_id=appointment.id
+        )
+
+    # ---------------------------------------------------------
+    # POST - Save consultation
+    # ---------------------------------------------------------
+    if request.method == 'POST':
+        form = ConsultationForm(request.POST)
+
+        if form.is_valid():
+            consultation = form.save(commit=False)
+
+            consultation.appointment = appointment
+            consultation.patient = appointment.patient
+            consultation.doctor = appointment.doctor
+
+            consultation.save()
+
+            # Mark appointment as completed
+            appointment.status = 'completed'
+            appointment.save(update_fields=['status'])
+
+            # Create Medical Record
+            MedicalRecord.objects.create(
+                patient=appointment.patient,
+                doctor=appointment.doctor,
+                record_type='consultation',
+                diagnosis=consultation.diagnosis,
+                prescription=consultation.prescription,
+                notes=consultation.visit_notes
+            )
+
+            messages.success(
+                request,
+                f'Consultation for {appointment.patient.name} '
+                f'completed successfully.'
+            )
+
+            return redirect(
+                'view_consultation',
+                appointment_id=appointment.id
+            )
+
+    else:
+        form = ConsultationForm()
+
+    context = {
+        'form': form,
+        'appointment': appointment,
+        'page': 'consultation',
+        'role': role,
+    }
+
+    return render(request, 'ward/home.html', context)
+@login_required
+def view_consultation(request, appointment_id):
+    appointment = Appointment.objects.select_related(
+        'patient',
+        'doctor__profile__user'
+    ).filter(id=appointment_id).first()
+
+    if not appointment:
+        messages.error(request, 'Appointment not found.')
+        return redirect('/dashboard/?page=appointments')
+
+    profile = request.user.profile
+    role = str(profile.role).lower().strip()
+
+    # ---------------------------------------------------------
+    # SECURITY
+    # Doctor can only view consultations assigned to them.
+    # Admin and receptionist can view all consultations.
+    # ---------------------------------------------------------
+    if role == 'doctor':
+        assigned_doctor_user_id = appointment.doctor.profile.user_id
+
+        if assigned_doctor_user_id != request.user.id:
+            messages.error(
+                request,
+                'You do not have permission to view this consultation.'
+            )
+            return redirect('/dashboard/?page=appointments')
+
+    elif role not in ['admin', 'receptionist']:
+        messages.error(
+            request,
+            'You do not have permission to view this consultation.'
+        )
+        return redirect('/dashboard/?page=appointments')
+
+    # ---------------------------------------------------------
+    # Get consultation
+    # ---------------------------------------------------------
+    consultation = getattr(appointment, 'consultation', None)
+
+    if not consultation:
+        messages.warning(
+            request,
+            'No consultation found for this appointment.'
+        )
+        return redirect('/dashboard/?page=appointments')
+
+    context = {
+        'appointment': appointment,
+        'consultation': consultation,
+        'page': 'view_consultation',
+        'role': role,
+    }
+
+    return render(
+        request,
+        'ward/home.html',
+        context
+    )
 @login_required(login_url='login')
+@role_required(['receptionist', 'admin', 'doctor'])
 def edit_appointment(request, appointment_id):
     appointment = Appointment.objects.filter(id=appointment_id).first()
 
@@ -950,7 +987,82 @@ def edit_appointment(request, appointment_id):
         'appointment': appointment,
         'role': role,
     })
+@login_required
+def create_consultation(request, appointment_id):
+    appointment = Appointment.objects.filter(id=appointment_id).first()
+    profile = request.user.profile
+    role = profile.role
 
+    # Handle if appointment doesn't exist
+    if not appointment:
+        messages.error(request, 'Appointment not found.')
+        return redirect('/dashboard/?page=appointments')
+
+    # SECURITY: Only the assigned doctor can consult
+    if role == 'doctor' and appointment.doctor != profile:
+        messages.error(request, 'You can only consult your assigned patients.')
+        return redirect('/dashboard/?page=appointments')
+
+    # Prevent double consultation
+    if hasattr(appointment, 'consultation'):
+        messages.info(request, 'Consultation already exists for this appointment.')
+        return redirect('view_consultation', appointment_id=appointment.id)
+
+    if request.method == 'POST':
+        form = ConsultationForm(request.POST)
+        if form.is_valid():
+            consultation = form.save(commit=False)
+            consultation.appointment = appointment
+            consultation.doctor = profile
+            consultation.save()
+            
+            # Auto mark appointment as completed
+            appointment.status = 'completed'
+            appointment.save()
+            
+            messages.success(request, f'Consultation for {appointment.patient.name} completed successfully.')
+            return redirect('view_consultation', appointment_id=appointment.id)
+        else:
+            messages.error(request, 'Please fill all required fields correctly.')
+    else:
+        form = ConsultationForm()
+
+    context = {
+        'form': form,
+        'appointment': appointment,
+        'page': 'consultation',
+        'role': role,
+    }
+    return render(request, 'ward/home.html', context)
+
+@login_required
+def view_consultation(request, appointment_id):
+    appointment = Appointment.objects.filter(id=appointment_id).first()
+    profile = request.user.profile
+    role = profile.role
+
+    # Handle if appointment doesn't exist
+    if not appointment:
+        messages.error(request, 'Appointment not found.')
+        return redirect('/dashboard/?page=appointments')
+
+    # SECURITY: Only assigned doctor, admin, or receptionist can view
+    if role == 'doctor' and appointment.doctor != profile:
+        messages.error(request, 'You do not have permission to view this consultation.')
+        return redirect('/dashboard/?page=appointments')
+        
+    consultation = getattr(appointment, 'consultation', None)
+    if not consultation:
+        messages.warning(request, 'No consultation found for this appointment.')
+        return redirect('/dashboard/?page=appointments')
+
+    context = {
+        'appointment': appointment,
+        'consultation': consultation,
+        'page': 'view_consultation',
+        'role': role,
+    }
+    return render(request, 'ward/home.html', context)
 @login_required(login_url='login')
 @role_required(['admin', 'receptionist'])  
 def delete_appointment(request, appointment_id):
@@ -965,8 +1077,8 @@ def delete_appointment(request, appointment_id):
     else:
         messages.error(request, 'Invalid request method.')
         
-        return redirect('/dashboard/?page=appointments')
-
+    
+    return redirect('/dashboard/?page=appointments')
 @login_required(login_url='login')
 def patient_detail(request, pk):
     patient = Patient.objects.filter(id=pk).first()
@@ -1030,6 +1142,7 @@ def admit_patient(request):
 
     return redirect('/dashboard/?page=admissions')
 
+
 @login_required(login_url='login')
 @role_required(['receptionist', 'admin', 'doctor'])
 def edit_admission(request):
@@ -1045,6 +1158,7 @@ def edit_admission(request):
             messages.error(request, "Admission record not found.")
 
     return redirect('/dashboard/?page=admissions') 
+
 
 @login_required(login_url='login')
 @role_required(['receptionist', 'admin', 'doctor'])
@@ -1106,18 +1220,45 @@ def admissions_view(request):
     if request.method == 'POST':
         if 'admit_patient' in request.POST:
             admission_form = AdmissionForm(request.POST)
+
             if admission_form.is_valid():
-                admission = form.save(commit=False)
-                admission.diagnosis = request.POST.get('diagnosis', '')
+                admission = admission_form.save(commit=False)
                 admission.status = 'admitted'
-                admission.admission_date = request.POST.get('admission_date')
+
+                # Only keep this if diagnosis exists in your Admission model
+                diagnosis = request.POST.get('diagnosis')
+                if diagnosis:
+                    admission.diagnosis = diagnosis
+
                 admission.save()
 
-                messages.success(request, 'Patient admitted successfully')
+                messages.success(
+                    request,
+                    f'{admission.patient.name} admitted successfully.'
+                )
+
+                try:
+                    notify_patient_admitted(admission)
+                except Exception:
+                    pass
+
+                try:
+                    log_activity(
+                        request.user,
+                        f'Admitted patient {admission.patient.name}',
+                        admission
+                    )
+                except Exception:
+                    pass
+
                 return redirect('/dashboard/?page=admissions')
+
             else:
-                 print(form.errors)           
-                 messages.error(request, form.errors.as_text())
+                print(admission_form.errors)
+                messages.error(
+                    request,
+                    admission_form.errors.as_text()
+                )
         
         elif 'discharge' in request.POST:
             discharge_id = request.POST.get('discharge_id')
@@ -1178,7 +1319,6 @@ def admissions_view(request):
     }
     
     return render(request, 'ward/home.html', context)
-
 # =========================================================
 # CONSULTATION - Doctor only
 # =========================================================

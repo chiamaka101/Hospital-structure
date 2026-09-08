@@ -1,4 +1,3 @@
-
 from django import forms
 from .models import (
     Doctor, UserProfile, Patient, Appointment, Admission, Invoice, Medicine, Consultation,
@@ -64,7 +63,6 @@ class RegisterForm(UserCreationForm):
             user.save()
         return user
 
-
 class DoctorCreateForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -105,7 +103,6 @@ class DoctorCreateForm(UserCreationForm):
             user.save()
         return user
 
-
 class DoctorEditForm(forms.ModelForm):
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -139,7 +136,6 @@ class DoctorEditForm(forms.ModelForm):
             doctor.save()
         return doctor
 
-
 class PatientForm(forms.ModelForm):
     class Meta:
         model = Patient
@@ -152,7 +148,6 @@ class PatientForm(forms.ModelForm):
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Home address'}),
             'medical_history': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Medical history'}),
         }
-
 
 class AppointmentForm(forms.ModelForm):
     new_patient_name = forms.CharField(
@@ -174,7 +169,7 @@ class AppointmentForm(forms.ModelForm):
     )
     new_patient_gender = forms.ChoiceField(
         required=False,
-        choices=[('', 'Select gender'), ('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')],
+        choices=[('', 'Select gender'), ('M', 'Male'), ('F', 'Female'), ('Other', 'Other')],  # FIX: M/F to match model
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     new_patient_contact = forms.CharField(
@@ -211,6 +206,8 @@ class AppointmentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['patient'].required = False
         self.fields['patient'].empty_label = "Select existing patient..."
+        # Only show doctors in dropdown
+        self.fields['doctor'].queryset = Doctor.objects.select_related('profile__user').all()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -233,7 +230,6 @@ class AppointmentForm(forms.ModelForm):
         
         return cleaned_data
 
-
 class AdmissionForm(forms.ModelForm):
     admission_date = forms.DateTimeField(
         initial=timezone.now,
@@ -251,20 +247,17 @@ class AdmissionForm(forms.ModelForm):
             'ward': forms.Select(attrs={'class': 'form-control'}),
             'doctor': forms.Select(attrs={'class': 'form-control'}),
             'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'primary_diagnosis': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
-
-class ConsultationForm(forms.ModelForm):
+class ConsultationForm(forms.ModelForm): # <-- THIS WAS MISSING
     class Meta:
         model = Consultation
         fields = ['visit_notes', 'diagnosis', 'prescription']
         widgets = {
-            'visit_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'diagnosis': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'prescription': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'visit_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Patient symptoms, observations...'}),
+            'diagnosis': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Doctor diagnosis...'}),
+            'prescription': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Drugs and dosage...'}),
         }
-
 
 class InvoiceForm(forms.ModelForm):
     class Meta:
@@ -294,13 +287,8 @@ class InvoiceForm(forms.ModelForm):
         self.fields['doctor'].queryset = Doctor.objects.select_related('profile__user').all()
         self.fields['doctor'].required = False
 
-        if self.instance and self.instance.pk:
-            self.fields['consultation'].queryset = Consultation.objects.all()
-            self.fields['admission'].queryset = Admission.objects.all()
-        else:
-            self.fields['consultation'].queryset = Consultation.objects.all()
-            self.fields['admission'].queryset = Admission.objects.all()
-
+        self.fields['consultation'].queryset = Consultation.objects.all()
+        self.fields['admission'].queryset = Admission.objects.all()
         self.fields['consultation'].required = False
         self.fields['admission'].required = False
 
@@ -317,9 +305,6 @@ class InvoiceForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
-        if not self.is_bound:
-            return cleaned
-
         service = cleaned.get('service_fee') or 0
         lab = cleaned.get('lab_fee') or 0
         admission = cleaned.get('admission_fee') or 0
@@ -327,27 +312,7 @@ class InvoiceForm(forms.ModelForm):
 
         if total <= 0:
             raise forms.ValidationError("Total amount must be greater than 0. Add at least one fee.")
-
-        consultation = cleaned.get('consultation')
-        admission_obj = cleaned.get('admission')
-
-        if consultation and service == 0:
-            service_fee = consultation.fee or 0
-            cleaned['service_fee'] = service_fee
-            total += service_fee
-
-        if admission_obj and admission == 0:
-            admission_fee = admission_obj.fee or 0
-            cleaned['admission_fee'] = admission_fee
-            total += admission_fee
-
-        cleaned['total_amount'] = total
-
-        if cleaned.get('status') == 'paid' and not cleaned.get('payment_method'):
-            cleaned['payment_method'] = 'cash'
-
         return cleaned
-
 
 class MedicalRecordForm(forms.ModelForm):
     class Meta:
@@ -361,37 +326,11 @@ class MedicalRecordForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'files': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,.jpg,.jpeg,.png,.docx'}),
         }
-        labels = {
-            'files': 'Attachment',
-            'prescription': 'Prescription'
-        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-
-        self.fields['patient'].queryset = Patient.objects.none()
-
-        if user:
-            doctor = Doctor.objects.filter(profile__user=user).first()
-            if doctor:
-                patient_ids = Appointment.objects.filter(doctor=doctor).values_list('patient_id', flat=True)
-                self.fields['patient'].queryset = Patient.objects.filter(id__in=patient_ids).distinct().order_by('name')
-
-        self.fields['patient'].empty_label = "-- Select Patient --"
-        self.fields['record_type'].choices = [
-            ('', '-- Select Type --'),
-            ('consultation', 'Consultation'),
-            ('lab_result', 'Lab Result'),
-            ('prescription', 'Prescription'),
-            ('discharge', 'Discharge Summary'),
-            ('follow_up', 'Follow Up'),
-            ('other', 'Other')
-        ]
-        self.fields['diagnosis'].required = True
-        self.fields['prescription'].required = False
-        self.fields['files'].required = False
-
+        self.fields['patient'].queryset = Patient.objects.all().order_by('name')
 
 class PrescriptionForm(forms.ModelForm):
     class Meta:
@@ -402,21 +341,6 @@ class PrescriptionForm(forms.ModelForm):
             'record': forms.Select(attrs={'class': 'form-select'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Instructions...'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['patient'].queryset = Patient.objects.all().order_by('name')
-        self.fields['patient'].empty_label = "Select a patient"
-        
-        # FIX: Allow validation to succeed when the field is uneditable/disabled in HTML
-        if self.instance and self.instance.pk:
-            self.fields['patient'].required = False
-            self.fields['patient'].disabled = True
-
-        self.fields['record'].queryset = MedicalRecord.objects.all().order_by('-created_at')
-        self.fields['record'].required = False
-        self.fields['record'].empty_label = "No record / General prescription"
-
 
 class PrescriptionItemForm(forms.ModelForm):
     class Meta:
@@ -435,103 +359,44 @@ class MedicineForm(forms.ModelForm):
         model = Medicine
         fields = '__all__'
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Paracetamol'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Medicine description'
-            }),
-            'category': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter category'
-            }),
-            'quantity_in_stock': forms.NumberInput(attrs={
-                'class': 'form-control'
-            }),
-            'price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01'
-            }),
-            'expiry_date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Paracetamol'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'category': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantity_in_stock': forms.NumberInput(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
-
 
 class LaboratoryTestForm(forms.ModelForm):
     class Meta:
         model = LaboratoryTest
-        fields = [
-            'patient',
-            'doctor',
-            'test_name',
-            'sample_type',
-            'priority',
-            'note',
-        ]
-
+        fields = ['patient', 'doctor', 'test_name', 'sample_type', 'priority', 'note']
         widgets = {
             'patient': forms.Select(attrs={'class': 'form-select'}),
             'doctor': forms.Select(attrs={'class': 'form-select'}),
-            'test_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g. Complete Blood Count (CBC)'
-            }),
-            'sample_type': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g. Whole Blood'
-            }),
+            'test_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'sample_type': forms.TextInput(attrs={'class': 'form-control'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
-            'note': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Clinical notes / symptoms'
-            }),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
 class ProfileForm(forms.ModelForm):                         
-    username = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    first_name = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-
-    last_name = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-
-    email = forms.EmailField(
-        required=False,
-        widget=forms.EmailInput(attrs={'class': 'form-control'})
-    )
+    username = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = UserProfile
         fields = ['phone', 'avatar']
-
         widgets = {
-            'phone': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '+2348012345678'
-            }),
-            'avatar': forms.FileInput(attrs={
-                'class': 'form-control',
-                'accept': 'image/*'
-            }),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'avatar': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
-
         super().__init__(*args, **kwargs)
-
         if user:
             self.fields['username'].initial = user.username
             self.fields['first_name'].initial = user.first_name
@@ -540,16 +405,12 @@ class ProfileForm(forms.ModelForm):
 
     def save(self, commit=True):
         profile = super().save(commit=False)
-
         if hasattr(profile, 'user'):
             profile.user.first_name = self.cleaned_data.get('first_name')
             profile.user.last_name = self.cleaned_data.get('last_name')
             profile.user.email = self.cleaned_data.get('email')
-
             if commit:
                 profile.user.save()
-
         if commit:
             profile.save()
-
         return profile

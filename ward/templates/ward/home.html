@@ -347,6 +347,154 @@ body {
     color: #475569 !important;
     font-weight: 600;
   }
+  .doctor-dashboard {
+            padding: 1.5rem;
+        }
+
+        .doctor-welcome {
+            background: linear-gradient(135deg, #9191e7, #2563eb);
+            color: white;
+            border-radius: 18px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.15);
+        }
+
+        .doctor-welcome h2 {
+            font-weight: 700;
+            margin-bottom: .4rem;
+        }
+
+        .doctor-welcome p {
+            margin-bottom: 0;
+            opacity: .9;
+        }
+
+        .doctor-stat-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 1.25rem;
+            height: 100%;
+            transition: all .2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,.04);
+        }
+
+        .doctor-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,.08);
+        }
+
+        .doctor-stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .doctor-stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .doctor-stat-label {
+            color: #6b7280;
+            font-size: .9rem;
+        }
+
+        .doctor-section {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            margin-top: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,.04);
+        }
+
+        .doctor-section-header {
+            padding: 1.2rem 1.4rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .doctor-section-header h5 {
+            margin: 0;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .doctor-table th {
+            font-size: .78rem;
+            text-transform: uppercase;
+            color: #6b7280;
+            font-weight: 600;
+            padding: 1rem;
+            white-space: nowrap;
+        }
+
+        .doctor-table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .patient-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #eff6ff;
+            color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: .6rem;
+        }
+
+        .doctor-action-btn {
+            border-radius: 9px;
+            font-size: .82rem;
+        }
+
+        .quick-action {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 1.2rem;
+            text-decoration: none;
+            color: #111827;
+            display: block;
+            height: 100%;
+            transition: all .2s ease;
+            background: white;
+        }
+
+        .quick-action:hover {
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, .10);
+            color: #2563eb;
+        }
+
+        .quick-action i {
+            font-size: 1.5rem;
+            margin-bottom: .7rem;
+            display: block;
+            color: #2563eb;
+        }
+
+        .empty-doctor-state {
+            padding: 3rem 1rem;
+            text-align: center;
+            color: #6b7280;
+        }
 </style>
 </head>
 <body>
@@ -375,6 +523,8 @@ body {
    
 <!-- Navigation -->
 <ul class="sidebar-menu">
+
+  <!-- Dashboard (Accessible to All Authenticated Users) -->
   <li>
     <a href="{% url 'dashboard' %}" class="sidebar-link {% if page == 'dashboard' %}active{% endif %}">
       <i class="bi bi-speedometer2"></i>
@@ -382,7 +532,8 @@ body {
     </a>
   </li>
 
-  {% if role != 'patient' %}
+  <!-- ==================== ADMIN & MEDICAL STAFF ==================== -->
+  {% if role in 'admin,doctor,nurse,receptionist' %}
   <li>
     <a href="{% url 'dashboard' %}?page=patients" class="sidebar-link {% if page == 'patients' %}active{% endif %}">
       <i class="bi bi-people"></i>
@@ -403,35 +554,50 @@ body {
       <span>Admissions</span>
     </a>
   </li>
+  {% endif %}
 
+  <!-- ==================== CLINICAL RECORDS (Doctors, Nurses, Admin) ==================== -->
+  {% if role in 'admin,doctor,nurse,receptionist' %}
   <li>
     <a href="{% url 'dashboard' %}?page=medical_records" class="sidebar-link {% if page == 'medical_records' %}active{% endif %}">
       <i class="bi bi-file-medical"></i>
       <span>Medical Records</span>
     </a>
   </li>
+  {% endif %}
 
+  <!-- ==================== PRESCRIPTIONS (Doctors, Pharmacists, Admin) ==================== -->
+  {% if role in 'admin,doctor,pharmacist,receptionist' %}
   <li>
     <a href="{% url 'dashboard' %}?page=prescriptions" class="sidebar-link {% if page == 'prescriptions' %}active{% endif %}">
       <i class="bi bi-capsule"></i>
       <span>Prescriptions</span>
     </a>
   </li>
+  {% endif %}
 
+  <!-- ==================== PHARMACY (Pharmacists, Admin) ==================== -->
+  {% if role in 'admin,pharmacist,receptionist' %}
   <li>
     <a href="{% url 'dashboard' %}?page=pharmacy" class="sidebar-link {% if page == 'pharmacy' %}active{% endif %}">
       <i class="bi bi-prescription2"></i>
       <span>Pharmacy</span>
     </a>
   </li>
+  {% endif %}
 
+  <!-- ==================== LABORATORY (Lab Techs, Doctors, Admin) ==================== -->
+  {% if role in 'admin,doctor,lab_tech,receptionist' %}
   <li>
     <a href="{% url 'dashboard' %}?page=laboratory" class="sidebar-link {% if page == 'laboratory' %}active{% endif %}">
       <i class="bi bi-eyedropper"></i>
       <span>Laboratory</span>
     </a>
   </li>
+  {% endif %}
 
+  <!-- ==================== BILLING / INVOICES (Admin, Accountant, Receptionist) ==================== -->
+  {% if role in 'admin,accountant,receptionist' %}
   <li>
     <a href="{% url 'dashboard' %}?page=invoices" class="sidebar-link {% if page == 'invoices' %}active{% endif %}">
       <i class="bi bi-receipt"></i>
@@ -440,13 +606,45 @@ body {
   </li>
   {% endif %}
 
+  <!-- ==================== PATIENT-SPECIFIC MENU ==================== -->
+  {% if role == 'patient' %}
+  <li>
+    <a href="{% url 'dashboard' %}?page=appointments" class="sidebar-link {% if page == 'appointments' %}active{% endif %}">
+      <i class="bi bi-calendar-check"></i>
+      <span>My Appointments</span>
+    </a>
+  </li>
+  <li>
+    <a href="{% url 'dashboard' %}?page=medical_records" class="sidebar-link {% if page == 'medical_records' %}active{% endif %}">
+      <i class="bi bi-file-medical"></i>
+      <span>My Medical History</span>
+    </a>
+  </li>
+  <li>
+    <a href="{% url 'dashboard' %}?page=prescriptions" class="sidebar-link {% if page == 'prescriptions' %}active{% endif %}">
+      <i class="bi bi-capsule"></i>
+      <span>My Prescriptions</span>
+    </a>
+  </li>
+  <li>
+    <a href="{% url 'dashboard' %}?page=invoices" class="sidebar-link {% if page == 'invoices' %}active{% endif %}">
+      <i class="bi bi-receipt"></i>
+      <span>My Bills</span>
+    </a>
+  </li>
+  {% endif %}
+
+  <!-- ==================== REPORTS ==================== -->
+  {% if role in 'admin,accountant,receptionist' %}
   <li>
     <a href="{% url 'report' %}" class="sidebar-link {% if page == 'report' %}active{% endif %}">
       <i class="bi bi-bar-chart-line"></i>
       <span>Reports</span>
     </a>
   </li>
+  {% endif %}
 
+  <!-- ==================== ADMIN ONLY ==================== -->
   {% if role == 'admin' %}
   <div class="sidebar-divider"></div>
 
@@ -460,6 +658,7 @@ body {
 
   <div class="sidebar-divider"></div>
 
+  <!-- Common Navigation Links -->
   <li>
     <a href="{% url 'dashboard' %}?page=profile" class="sidebar-link {% if page == 'profile' %}active{% endif %}">
       <i class="bi bi-person"></i>
@@ -491,7 +690,6 @@ body {
 </ul>
 </nav>
 {% endif %}
-
 
   <!-- PAGE CONTENT -->
   <div class="content" id="content">
@@ -657,348 +855,620 @@ body {
 {% elif user.is_authenticated and page == 'dashboard' %}
     {% load humanize %}
 
-    <!-- DASHBOARD CONTENT -->
-    
+    {% if role == 'doctor' %}
 
-    <div class="fade-up">
-      <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h3 class="fw-bold mb-1">
-            Good {% now "G" as hour %}{% if hour|add:0 < 12 %}Morning{% elif hour|add:0 < 17 %}Afternoon{% else %}Evening{% endif %}, {{ user.first_name }} 
-          </h3>
-          <small class="text-muted">Receptionist Dashboard • {{ today|date:"l, F d, Y" }}</small>
-        </div>
-        <div class="d-flex gap-2">
-          <a href="{% url 'dashboard' %}?page=create_patient" class="btn btn-primary">
-    <i class="bi bi-person-plus me-2"></i>Register Patient
-</a>
-          <a href="{% url 'create_appointment' %}" class="btn btn-outline-primary"><i class="bi bi-calendar-plus me-2"></i>New Appointment</a>
-        </div>
-      </div>
+    <div class="doctor-dashboard">
 
-      <!-- KPI Cards -->
-      <div class="row g-4 mb-4">
-        <div class="col-md-3">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="mini-icon"><i class="bi bi-people-fill"></i></div>
-                <h3 class="fw-bold mb-0">{{ total_patients|default:19 }}</h3>
-              </div>
-              <small class="text-muted">Patients</small>
-              <small class="d-block mt-2"><span style="width:6px;height:6px;background:var(--muted);border-radius:50%;display:inline-block;margin-right:4px;"></span>No change today</small>
+        <!-- WELCOME HEADER -->
+        <div class="doctor-welcome">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2>
+                        <i class="bi bi-heart-pulse me-2"></i>
+                        Doctor Dashboard
+                    </h2>
+                    <p>
+                        Welcome back,
+                        <strong>
+                            {% if request.user.first_name %}
+                                Dr. {{ request.user.first_name }}
+                            {% else %}
+                                Dr. {{ request.user.username }}
+                            {% endif %}
+                        </strong>
+                    </p>
+                    <small>Manage your patients, consultations, medical records and prescriptions.</small>
+                </div>
+                <div>
+                    <span class="badge bg-light text-primary px-3 py-2">
+                        <i class="bi bi-person-badge me-1"></i>
+                        Doctor
+                    </span>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="col-md-3">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="mini-icon" style="background: rgba(245,158,11,0.12);"><i class="bi bi-calendar-check" style="color: var(--warning);"></i></div>
-                <h3 class="fw-bold mb-0">{{ today_appointments.count|default:0 }}</h3>
-              </div>
-              <small class="text-muted">Appointments</small>
-              <small class="d-block mt-2"><span style="width:6px;height:6px;background:var(--warning);border-radius:50%;display:inline-block;margin-right:4px;"></span>Today scheduled</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="mini-icon success-icon"><i class="bi bi-heart-pulse-fill"></i></div>
-                <h3 class="fw-bold mb-0">{{ current_admissions|default:2 }}</h3>
-              </div>
-              <small class="text-muted">Admissions</small>
-              <small class="d-block mt-2" style="color: var(--success);"><span style="width:6px;height:6px;background:var(--success);border-radius:50%;display:inline-block;margin-right:4px;"></span>0 discharged today</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="mini-icon" style="background: rgba(239,68,68,0.12);"><i class="bi bi-cash-coin" style="color: var(--danger);"></i></div>
-                <h3 class="fw-bold mb-0">₦{{ outstanding_bills|default:3000|intcomma }}</h3>
-              </div>
-              <small class="text-muted">Outstanding Bills</small>
-              <small class="d-block mt-2" style="color: var(--danger);"><span style="width:6px;height:6px;background:var(--danger);border-radius:50%;display:inline-block;margin-right:4px;"></span>1 invoices pending</small>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Main Layout Columns -->
-      <div class="row g-4">
-        <!-- Left Column (8/12 Width) -->
-        <div class="col-lg-8">
-          
-          <!-- Morning Brief Card -->
-          <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-4 px-4 pb-2">
-              <h5 class="fw-bold mb-0" style="font-size: 1.15rem;">
-                <i class="bi bi-sun-fill text-warning me-2"></i>Morning Brief
-              </h5>
-              <span class="badge rounded-pill px-3 py-2" style="background: #dcfce7; color: #166534; font-size: 0.875rem; white-space: nowrap;">
-                <i class="bi bi-check-circle me-1"></i>0 urgent issues
-              </span>
-            </div>
-            <div class="card-body px-4 pb-4 pt-3">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <div class="info-box h-100">
-                    <div class="info-icon"><i class="bi bi-calendar"></i></div>
-                    <div class="flex-grow-1">
-                      <small class="text-muted d-block">Appointments</small>
-                      <h4 class="fw-bold mb-0">{{ today_appointments.count|default:0 }}</h4>
-                      <small class="text-muted">scheduled today</small>
+        <!-- STATISTICS -->
+        <div class="row g-4">
+            <!-- My Patients -->
+            <div class="col-xl-3 col-md-6">
+                <div class="doctor-stat-card">
+                    <div class="doctor-stat-icon">
+                        <i class="bi bi-people"></i>
                     </div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="info-box h-100">
-                    <div class="info-icon success"><i class="bi bi-heart-pulse-fill"></i></div>
-                    <div class="flex-grow-1">
-                      <small class="text-muted d-block">Admissions</small>
-                      <h4 class="fw-bold mb-0">{{ current_admissions|default:2 }}</h4>
-                      <small class="text-muted">currently admitted</small>
+                    <div class="doctor-stat-number">
+                        {{ doctor_patient_count|default:0 }}
                     </div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="info-box h-100">
-                    <div class="info-icon warning"><i class="bi bi-receipt"></i></div>
-                    <div class="flex-grow-1">
-                      <small class="text-muted d-block">Pending bills</small>
-                      <h4 class="fw-bold mb-0">₦{{ outstanding_bills|default:3000|intcomma }}</h4>
-                      <small class="text-muted">1 invoice awaiting payment</small>
+                    <div class="doctor-stat-label">
+                        My Patients
                     </div>
-                  </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="info-box h-100">
-                    <div class="info-icon" style="background: rgba(139,92,246,0.12);"><i class="bi bi-person-plus" style="color: #8b5cf6;"></i></div>
-                    <div class="flex-grow-1">
-                      <small class="text-muted d-block">New patients</small>
-                      <h4 class="fw-bold mb-0">{{ new_patients_today|default:0 }}</h4>
-                      <small class="text-muted">registered today</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
 
-          <!-- Today's Schedule Card -->
-          <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h6 class="mb-0"><i class="bi bi-calendar-day me-2" style="color: var(--primary);"></i>Today's Schedule</h6>
-              <span class="btn btn-primary btn-sm rounded-pill">{{ today_appointments.count|default:0 }} appointments</span>
-            </div>
-            <div class="card-body">
-              {% if today_appointments %}
-                {% for apt in today_appointments %}
-                <div class="d-flex align-items-center p-3 mb-2 rounded-3" style="background: rgba(37,99,235,0.03); border: 1px solid var(--border); gap: 1.5rem; flex-wrap: nowrap; transition: var(--transition);" onmouseover="this.style.transform='translateX(4px)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.transform='translateX(0)'; this.style.borderColor='var(--border)'">
-                  <div class="flex-shrink-0 text-center" style="width: 90px;">
-                    <div class="fw-bold" style="font-size: 1.15rem; line-height: 1.2; color: var(--primary);">{{ apt.date_time|time:"g:i" }}</div>
-                    <small class="text-muted" style="font-size: 0.75rem;">{{ apt.date_time|date:"M d" }}</small>
-                  </div>
-                  <div class="flex-grow-1 text-truncate" style="white-space: nowrap;">
-                    <span class="fw-semibold">{{ apt.patient.name|title }}</span>
-                    <span class="text-muted ms-2">• {{ apt.reason|default:'Consultation' }} • Dr. {{ apt.doctor.profile.user.get_full_name|default:apt.doctor.profile.user.username }}</span>
-                  </div>
-                  <div class="flex-shrink-0" style="width: 110px;">
-                    {% if apt.status == 'scheduled' %}
-                      <span class="badge rounded-pill px-3 py-2" style="background: rgba(37,99,235,0.12); color: var(--primary);">{{ apt.status|title }}</span>
-                    {% elif apt.status == 'completed' %}
-                      <span class="badge rounded-pill px-3 py-2" style="background: rgba(22,163,74,0.12); color: var(--success);">{{ apt.status|title }}</span>
-                    {% else %}
-                      <span class="badge rounded-pill px-3 py-2" style="background: rgba(245,158,11,0.12); color: var(--warning);">{{ apt.status|title }}</span>
-                    {% endif %}
-                  </div>
-                  <div class="flex-shrink-0" style="width: 85px;">
-                    <a href="{% url 'dashboard' %}?page=edit_appointment&id={{ apt.id }}" class="btn btn-sm btn-outline-primary rounded-3 w-100"><i class="bi bi-eye"></i></a>
-                  </div>
+            <!-- Today's Appointments -->
+            <div class="col-xl-3 col-md-6">
+                <div class="doctor-stat-card">
+                    <div class="doctor-stat-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="doctor-stat-number">
+                        {{ doctor_today_appointments|default:0 }}
+                    </div>
+                    <div class="doctor-stat-label">
+                        Today's Appointments
+                    </div>
                 </div>
-                {% endfor %}
-              {% else %}
-                <div class="empty-state text-center py-4">
-                  <i class="bi bi-calendar-x fs-2 text-muted mb-2"></i>
-                  <h6 class="fw-bold mb-2">No appointments scheduled today</h6>
-                  <p class="text-muted small mb-3">Create the first appointment for {{ today|date:"l" }}</p>
-                  <div class="d-flex gap-2 justify-content-center">
-                    <a href="{% url 'create_appointment' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus me-1"></i>Book Appointment</a>
-                    <a href="{% url 'add_patient' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Register Walk-in Patient</a>
-                  </div>
-                </div>
-              {% endif %}
             </div>
-          </div>
 
-          <!-- Bottom Columns: Patient Activity & Billing Split -->
-          <div class="row g-4">
-            <div class="col-md-6">
-              <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                  <h6 class="mb-0"><i class="bi bi-people me-2" style="color: var(--primary);"></i>Recent Patients</h6>
-                  <a href="{% url 'dashboard' %}?page=patients" class="small text-decoration-none" style="color: var(--primary);">View all →</a>
+            <!-- Active Admissions -->
+            <div class="col-xl-3 col-md-6">
+                <div class="doctor-stat-card">
+                    <div class="doctor-stat-icon">
+                        <i class="bi bi-hospital"></i>
+                    </div>
+                    <div class="doctor-stat-number">
+                        {{ doctor_active_admissions|default:0 }}
+                    </div>
+                    <div class="doctor-stat-label">
+                        Active Admissions
+                    </div>
                 </div>
-                <div class="card-body">
-                  <table class="table table-sm mb-0">
+            </div>
+
+            <!-- Pending Consultations -->
+            <div class="col-xl-3 col-md-6">
+                <div class="doctor-stat-card">
+                    <div class="doctor-stat-icon">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                    </div>
+                    <div class="doctor-stat-number">
+                        {{ doctor_pending_consultations|default:0 }}
+                    </div>
+                    <div class="doctor-stat-label">
+                        Pending Consultations
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="doctor-section">
+            <div class="doctor-section-header">
+                <h5>
+                    <i class="bi bi-lightning-charge me-2 text-primary"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="p-4">
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <a href="?page=patients" class="quick-action">
+                            <i class="bi bi-person-plus"></i>
+                            <strong>View Patients</strong>
+                            <small class="d-block text-muted mt-1">View and manage patient information</small>
+                        </a>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <a href="?page=appointments" class="quick-action">
+                            <i class="bi bi-calendar2-week"></i>
+                            <strong>Appointments</strong>
+                            <small class="d-block text-muted mt-1">View your appointments</small>
+                        </a>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <a href="?page=medical_records" class="quick-action">
+                            <i class="bi bi-file-medical"></i>
+                            <strong>Medical Records</strong>
+                            <small class="d-block text-muted mt-1">Create and review medical records</small>
+                        </a>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <a href="?page=prescriptions" class="quick-action">
+                            <i class="bi bi-capsule"></i>
+                            <strong>Prescriptions</strong>
+                            <small class="d-block text-muted mt-1">Manage patient prescriptions</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TODAY'S APPOINTMENTS -->
+        <div class="doctor-section">
+            <div class="doctor-section-header">
+                <h5>
+                    <i class="bi bi-calendar3 me-2 text-primary"></i>
+                    Today's Appointments
+                </h5>
+                <a href="?page=appointments" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table doctor-table mb-0">
                     <thead>
-                      <tr>
-                        <th class="border-0 small text-muted">Patient</th>
-                        <th class="border-0 small text-muted">ID</th>
-                        <th class="border-0 small text-muted">Time</th>
-                        <th class="border-0 small text-muted">Action</th>
-                      </tr>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Time</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
                     </thead>
                     <tbody>
-                      {% for patient in recent_patients|slice:":5" %}
-                      <tr>
-                        <td class="fw-semibold">{{ patient.name|title }}</td>
-                        <td><span class="badge rounded-pill" style="background: rgba(148,163,184,0.12); color: var(--muted);">{{ patient.patient_id }}</span></td>
-                        <td class="text-muted">{{ patient.created_at|time:"g:i A" }}</td>
-                        <td><a href="{% url 'dashboard' %}?page=patient_detail&id={{ patient.id }}" class="btn btn-sm btn-outline-primary rounded-3">View</a></td>
-                      </tr>
-                      {% empty %}
-                      <tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-people fs-2 d-block mb-2 opacity-25"></i>No patients registered today</td></tr>
-                      {% endfor %}
+                        {% for appointment in doctor_appointments_today %}
+                            <tr>
+                                <td>
+                                    <span class="patient-avatar">
+                                        {{ appointment.patient.name|first|upper }}
+                                    </span>
+                                    <strong>{{ appointment.patient.name }}</strong>
+                                </td>
+                                <td>
+                                    {{ appointment.date|date:"h:i A" }}
+                                </td>
+                                <td>
+                                    {{ appointment.reason|default:"Consultation" }}
+                                </td>
+                                <td>
+                                    {% if appointment.status == 'completed' %}
+                                        <span class="badge bg-success-subtle text-success">Completed</span>
+                                    {% elif appointment.status == 'cancelled' %}
+                                        <span class="badge bg-danger-subtle text-danger">Cancelled</span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning">{{ appointment.status|default:"Pending"|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="?page=appointments&appointment={{ appointment.id }}" class="btn btn-sm btn-outline-primary doctor-action-btn">
+                                        <i class="bi bi-eye me-1"></i>
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-doctor-state">
+                                        <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+                                        <strong>No appointments today</strong>
+                                        <p class="mb-0">You currently have no appointments scheduled for today.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
-                  </table>
-                </div>
-              </div>
+                </table>
             </div>
-            
-            <div class="col-md-6">
-              <div class="card h-100">
-                <div class="card-header"><h6 class="mb-0"><i class="bi bi-receipt me-2" style="color: var(--primary);"></i>Billing Summary</h6></div>
-                <div class="card-body">
-                  <div class="row g-2">
-                    <div class="col-12">
-                      <div class="info-box p-2 d-flex justify-content-between align-items-center" style="background: rgba(22,163,74,0.05);">
-                        <small class="text-muted">Today's Payments</small>
-                        <h5 class="fw-bold mb-0" style="color: var(--success);">₦{{ todays_payments|default:0|intcomma }}</h5>
-                      </div>
-                    </div>
-                    <div class="col-12">
-                      <div class="info-box p-2 d-flex justify-content-between align-items-center" style="background: rgba(245,158,11,0.05);">
-                        <small class="text-muted">Outstanding</small>
-                        <h5 class="fw-bold mb-0" style="color: var(--warning);">₦{{ outstanding_bills|default:3000|intcomma }}</h5>
-                      </div>
-                    </div>
-                    <div class="col-12">
-                      <div class="info-box p-2 d-flex justify-content-between align-items-center" style="background: rgba(239,68,68,0.05);">
-                        <small class="text-muted">Pending Invoices</small>
-                        <h5 class="fw-bold mb-0" style="color: var(--danger);">{{ pending_invoices|default:1 }}</h5>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <!-- Right Column (4/12 Width) -->
-        <div class="col-lg-4">
-          <!-- Notifications Card -->
-          <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h6 class="mb-0"><i class="bi bi-bell me-2" style="color: #2563eb;"></i>Notifications</h6>
-              <button class="btn btn-sm btn-outline-primary rounded-pill px-3">Mark all read</button>
+        <!-- RECENT PATIENTS -->
+        <div class="doctor-section">
+            <div class="doctor-section-header">
+                <h5>
+                    <i class="bi bi-people me-2 text-primary"></i>
+                    Recent Patients
+                </h5>
+                <a href="?page=patients" class="btn btn-sm btn-outline-primary">View Patients</a>
             </div>
-            <div class="card-body notification-body">
-              {% for notif in notifications|slice:":5" %}
-              <div class="notification-item {% if notif.is_read %}unread{% endif %} d-flex align-items-start mb-3 pb-3 border-bottom">
-                
-                {% if 'unpaid' in notif.message|lower or 'bill' in notif.message|lower or 'invoice' in notif.message|lower %}
-                  <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(245,158,11,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
-                    <i class="bi bi-receipt" style="color: #f59e0b;font-size:1.2rem;"></i>
-                  </div>
-                {% elif 'appointment' in notif.message|lower or 'schedule' in notif.message|lower %}
-                  <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(37,99,235,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
-                    <i class="bi bi-calendar-event" style="color: #2563eb;font-size:1.2rem;"></i>
-                  </div>
-                {% elif 'registered' in notif.message|lower or 'patient' in notif.message|lower or 'admitted' in notif.message|lower %}
-                  <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(22,163,74,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
-                    <i class="bi bi-person-plus-fill" style="color: #16a34a;font-size:1.2rem;"></i>
-                  </div>
-                {% elif 'warning' in notif.message|lower or 'alert' in notif.message|lower or 'failed' in notif.message|lower %}
-                  <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(239,68,68,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
-                    <i class="bi bi-exclamation-triangle-fill" style="color: #ef4444;font-size:1.2rem;"></i>
-                  </div>
-                {% else %}
-                  <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(37,99,235,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
-                    <i class="bi bi-bell-fill" style="color: #2563eb;font-size:1.2rem;"></i>
-                  </div>
-                {% endif %}
-                
-                <div class="flex-grow-1 text-truncate">
-                  <div class="fw-semibold small mb-1 text-wrap">{{ notif.message }}</div>
-                  <small class="text-muted" style="font-size:0.78rem;">{{ notif.created_at|timesince }} ago</small>
-                </div>
-              </div>
-              {% empty %}
-              <div class="text-center text-muted py-5">
-                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:70px;height:70px;border-radius:50%;background:#f1f5f9;">
-                  <i class="bi bi-bell-slash" style="font-size:2rem;color:#94a3b8;"></i>
-                </div>
-                <p class="mb-0 small">No new notifications</p>
-              </div>
-              {% endfor %}
-              
-              <a href="{% url 'dashboard' %}?page=notifications" class="d-block text-center small mt-3 fw-medium text-decoration-none" style="color: #2563eb;">
-                View all notifications →
+
+            <div class="table-responsive">
+                <table class="table doctor-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Gender</th>
+                            <th>Contact</th>
+                            <th>Last Visit</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in doctor_recent_patients %}
+                            <tr>
+                                <td>
+                                    <span class="patient-avatar">
+                                        {{ patient.name|first|upper }}
+                                    </span>
+                                    <strong>{{ patient.name }}</strong>
+                                </td>
+                                <td>
+                                    {{ patient.gender|default:"—" }}
+                                </td>
+                                <td>
+                                    {{ patient.contact|default:"—" }}
+                                </td>
+                                <td>
+                                    {{ patient.updated_at|date:"M d, Y"|default:"—" }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="?page=patient_detail&id={{ patient.id }}" class="btn btn-sm btn-outline-primary doctor-action-btn">
+                                        <i class="bi bi-eye"></i>
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-doctor-state">
+                                        <i class="bi bi-person-x fs-1 d-block mb-2"></i>
+                                        No patients found.
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    {% else %}
+        <!-- RECEPTIONIST DASHBOARD CONTENT -->
+        <div class="fade-up">
+          <!-- Header -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h3 class="fw-bold mb-1">
+                Good {% now "G" as hour %}{% if hour|add:0 < 12 %}Morning{% elif hour|add:0 < 17 %}Afternoon{% else %}Evening{% endif %}, {{ user.first_name }} 
+              </h3>
+              <small class="text-muted">Receptionist Dashboard • {{ today|date:"l, F d, Y" }}</small>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="{% url 'dashboard' %}?page=create_patient" class="btn btn-primary">
+                <i class="bi bi-person-plus me-2"></i>Register Patient
               </a>
+              <a href="{% url 'create_appointment' %}" class="btn btn-outline-primary"><i class="bi bi-calendar-plus me-2"></i>New Appointment</a>
             </div>
           </div>
 
-          <!-- Operations Card Inside Dashboard View -->
-          <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h6 class="mb-0"><i class="bi bi-list-task me-2" style="color: var(--primary);"></i>Today's Operations</h6>
-              <span class="badge" style="background: rgba(245,158,11,0.12); color: var(--warning); padding: 0.35em 0.65em;">3 tasks</span>
+          <!-- KPI Cards -->
+          <div class="row g-4 mb-4">
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="mini-icon"><i class="bi bi-people-fill"></i></div>
+                    <h3 class="fw-bold mb-0">{{ total_patients|default:19 }}</h3>
+                  </div>
+                  <small class="text-muted">Patients</small>
+                  <small class="d-block mt-2"><span style="width:6px;height:6px;background:var(--muted);border-radius:50%;display:inline-block;margin-right:4px;"></span>No change today</small>
+                </div>
+              </div>
             </div>
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
-                <div class="d-flex">
-                  <div class="info-icon danger me-3"><i class="bi bi-currency-dollar"></i></div>
-                  <div>
-                    <div class="fw-semibold small">Follow up pending payment <span class="badge ms-1" style="background: rgba(239,68,68,0.12); color: var(--danger);">High</span></div>
-                    <small class="text-muted">Invoice balance: ₦{{ outstanding_bills|default:3000|intcomma }}</small>
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="mini-icon" style="background: rgba(245,158,11,0.12);"><i class="bi bi-calendar-check" style="color: var(--warning);"></i></div>
+                    <h3 class="fw-bold mb-0">{{ today_appointments.count|default:0 }}</h3>
                   </div>
+                  <small class="text-muted">Appointments</small>
+                  <small class="d-block mt-2"><span style="width:6px;height:6px;background:var(--warning);border-radius:50%;display:inline-block;margin-right:4px;"></span>Today scheduled</small>
                 </div>
-                <a href="{% url 'dashboard' %}?page=invoices" class="btn btn-sm btn-outline-danger rounded-pill px-3">Open</a>
               </div>
-              <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
-                <div class="d-flex">
-                  <div class="info-icon warning me-3"><i class="bi bi-telephone"></i></div>
-                  <div>
-                    <div class="fw-semibold small">Confirm tomorrow's appointments <span class="badge ms-1" style="background: rgba(245,158,11,0.12); color: var(--warning);">Medium</span></div>
-                    <small class="text-muted">Send reminders before 6 PM.</small>
+            </div>
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="mini-icon success-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+                    <h3 class="fw-bold mb-0">{{ current_admissions|default:2 }}</h3>
                   </div>
+                  <small class="text-muted">Admissions</small>
+                  <small class="d-block mt-2" style="color: var(--success);"><span style="width:6px;height:6px;background:var(--success);border-radius:50%;display:inline-block;margin-right:4px;"></span>0 discharged today</small>
                 </div>
-                <a href="{% url 'dashboard' %}?page=appointments" class="btn btn-sm btn-outline-warning rounded-pill px-3">Review</a>
               </div>
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="d-flex">
-                  <div class="info-icon success me-3"><i class="bi bi-heart-pulse-fill"></i></div>
-                  <div>
-                    <div class="fw-semibold small">Review active admissions <span class="badge ms-1" style="background: rgba(22,163,74,0.12); color: var(--success);">{{ current_admissions|default:2 }} active</span></div>
-                    <small class="text-muted">Verify ward status and discharge plans.</small>
+            </div>
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="mini-icon" style="background: rgba(239,68,68,0.12);"><i class="bi bi-cash-coin" style="color: var(--danger);"></i></div>
+                    <h3 class="fw-bold mb-0">₦{{ outstanding_bills|default:3000|intcomma }}</h3>
                   </div>
+                  <small class="text-muted">Outstanding Bills</small>
+                  <small class="d-block mt-2" style="color: var(--danger);"><span style="width:6px;height:6px;background:var(--danger);border-radius:50%;display:inline-block;margin-right:4px;"></span>1 invoices pending</small>
                 </div>
-                <a href="{% url 'dashboard' %}?page=admissions" class="btn btn-sm btn-outline-success rounded-pill px-3">View</a>
               </div>
-              <a href="{% url 'dashboard' %}?page=tasks" class="d-block text-center small mt-3 text-decoration-none" style="color: var(--primary);">View all tasks →</a>
             </div>
           </div>
 
-        </div> <!-- End Right Column -->
-      </div> <!-- End Main row Layout -->
-    </div> <!-- End Dashboard View -->
+          <!-- Main Layout Columns -->
+          <div class="row g-4">
+            <!-- Left Column (8/12 Width) -->
+            <div class="col-lg-8">
+              
+              <!-- Morning Brief Card -->
+              <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-4 px-4 pb-2">
+                  <h5 class="fw-bold mb-0" style="font-size: 1.15rem;">
+                    <i class="bi bi-sun-fill text-warning me-2"></i>Morning Brief
+                  </h5>
+                  <span class="badge rounded-pill px-3 py-2" style="background: #dcfce7; color: #166534; font-size: 0.875rem; white-space: nowrap;">
+                    <i class="bi bi-check-circle me-1"></i>0 urgent issues
+                  </span>
+                </div>
+                <div class="card-body px-4 pb-4 pt-3">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="info-box h-100">
+                        <div class="info-icon"><i class="bi bi-calendar"></i></div>
+                        <div class="flex-grow-1">
+                          <small class="text-muted d-block">Appointments</small>
+                          <h4 class="fw-bold mb-0">{{ today_appointments.count|default:0 }}</h4>
+                          <small class="text-muted">scheduled today</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="info-box h-100">
+                        <div class="info-icon success"><i class="bi bi-heart-pulse-fill"></i></div>
+                        <div class="flex-grow-1">
+                          <small class="text-muted d-block">Admissions</small>
+                          <h4 class="fw-bold mb-0">{{ current_admissions|default:2 }}</h4>
+                          <small class="text-muted">currently admitted</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="info-box h-100">
+                        <div class="info-icon warning"><i class="bi bi-receipt"></i></div>
+                        <div class="flex-grow-1">
+                          <small class="text-muted d-block">Pending bills</small>
+                          <h4 class="fw-bold mb-0">₦{{ outstanding_bills|default:3000|intcomma }}</h4>
+                          <small class="text-muted">1 invoice awaiting payment</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="info-box h-100">
+                        <div class="info-icon" style="background: rgba(139,92,246,0.12);"><i class="bi bi-person-plus" style="color: #8b5cf6;"></i></div>
+                        <div class="flex-grow-1">
+                          <small class="text-muted d-block">New patients</small>
+                          <h4 class="fw-bold mb-0">{{ new_patients_today|default:0 }}</h4>
+                          <small class="text-muted">registered today</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Today's Schedule Card -->
+              <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0"><i class="bi bi-calendar-day me-2" style="color: var(--primary);"></i>Today's Schedule</h6>
+                  <span class="btn btn-primary btn-sm rounded-pill">{{ today_appointments.count|default:0 }} appointments</span>
+                </div>
+                <div class="card-body">
+                  {% if today_appointments %}
+                    {% for apt in today_appointments %}
+                    <div class="d-flex align-items-center p-3 mb-2 rounded-3" style="background: rgba(37,99,235,0.03); border: 1px solid var(--border); gap: 1.5rem; flex-wrap: nowrap; transition: var(--transition);" onmouseover="this.style.transform='translateX(4px)'; this.style.borderColor='var(--primary)'" onmouseout="this.style.transform='translateX(0)'; this.style.borderColor='var(--border)'">
+                      <div class="flex-shrink-0 text-center" style="width: 90px;">
+                        <div class="fw-bold" style="font-size: 1.15rem; line-height: 1.2; color: var(--primary);">{{ apt.date_time|time:"g:i" }}</div>
+                        <small class="text-muted" style="font-size: 0.75rem;">{{ apt.date_time|date:"M d" }}</small>
+                      </div>
+                      <div class="flex-grow-1 text-truncate" style="white-space: nowrap;">
+                        <span class="fw-semibold">{{ apt.patient.name|title }}</span>
+                        <span class="text-muted ms-2">• {{ apt.reason|default:'Consultation' }} • Dr. {{ apt.doctor.profile.user.get_full_name|default:apt.doctor.profile.user.username }}</span>
+                      </div>
+                      <div class="flex-shrink-0" style="width: 110px;">
+                        {% if apt.status == 'scheduled' %}
+                          <span class="badge rounded-pill px-3 py-2" style="background: rgba(37,99,235,0.12); color: var(--primary);">{{ apt.status|title }}</span>
+                        {% elif apt.status == 'completed' %}
+                          <span class="badge rounded-pill px-3 py-2" style="background: rgba(22,163,74,0.12); color: var(--success);">{{ apt.status|title }}</span>
+                        {% else %}
+                          <span class="badge rounded-pill px-3 py-2" style="background: rgba(245,158,11,0.12); color: var(--warning);">{{ apt.status|title }}</span>
+                        {% endif %}
+                      </div>
+                      <div class="flex-shrink-0" style="width: 85px;">
+                        <a href="{% url 'dashboard' %}?page=edit_appointment&id={{ apt.id }}" class="btn btn-sm btn-outline-primary rounded-3 w-100"><i class="bi bi-eye"></i></a>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state text-center py-4">
+                      <i class="bi bi-calendar-x fs-2 text-muted mb-2"></i>
+                      <h6 class="fw-bold mb-2">No appointments scheduled today</h6>
+                      <p class="text-muted small mb-3">Create the first appointment for {{ today|date:"l" }}</p>
+                      <div class="d-flex gap-2 justify-content-center">
+                        <a href="{% url 'create_appointment' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus me-1"></i>Book Appointment</a>
+                        <a href="{% url 'add_patient' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Register Walk-in Patient</a>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Bottom Columns: Patient Activity & Billing Split -->
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <h6 class="mb-0"><i class="bi bi-people me-2" style="color: var(--primary);"></i>Recent Patients</h6>
+                      <a href="{% url 'dashboard' %}?page=patients" class="small text-decoration-none" style="color: var(--primary);">View all →</a>
+                    </div>
+                    <div class="card-body">
+                      <table class="table table-sm mb-0">
+                        <thead>
+                          <tr>
+                            <th class="border-0 small text-muted">Patient</th>
+                            <th class="border-0 small text-muted">ID</th>
+                            <th class="border-0 small text-muted">Time</th>
+                            <th class="border-0 small text-muted">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for patient in recent_patients|slice:":5" %}
+                          <tr>
+                            <td class="fw-semibold">{{ patient.name|title }}</td>
+                            <td><span class="badge rounded-pill" style="background: rgba(148,163,184,0.12); color: var(--muted);">{{ patient.patient_id }}</span></td>
+                            <td class="text-muted">{{ patient.created_at|time:"g:i A" }}</td>
+                            <td><a href="{% url 'dashboard' %}?page=patient_detail&id={{ patient.id }}" class="btn btn-sm btn-outline-primary rounded-3">View</a></td>
+                          </tr>
+                          {% empty %}
+                          <tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-people fs-2 d-block mb-2 opacity-25"></i>No patients registered today</td></tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="card h-100">
+                    <div class="card-header"><h6 class="mb-0"><i class="bi bi-receipt me-2" style="color: var(--primary);"></i>Billing Summary</h6></div>
+                    <div class="card-body">
+                      <div class="row g-2">
+                        <div class="col-12">
+                          <div class="info-box p-2 d-flex justify-content-between align-items-center" style="background: rgba(22,163,74,0.05);">
+                            <small class="text-muted">Today's Payments</small>
+                            <h5 class="fw-bold mb-0" style="color: var(--success);">₦{{ todays_payments|default:0|intcomma }}</h5>
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <div class="info-box p-2 d-flex justify-content-between align-items-center" style="background: rgba(245,158,11,0.05);">
+                            <small class="text-muted">Outstanding</small>
+                            <h5 class="fw-bold mb-0" style="color: var(--warning);">₦{{ outstanding_bills|default:3000|intcomma }}</h5>
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <div class="info-box p-2 d-flex justify-content-between align-items-center" style="background: rgba(239,68,68,0.05);">
+                            <small class="text-muted">Pending Invoices</small>
+                            <h5 class="fw-bold mb-0" style="color: var(--danger);">{{ pending_invoices|default:1 }}</h5>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column (4/12 Width) -->
+            <div class="col-lg-4">
+              <!-- Notifications Card -->
+              <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0"><i class="bi bi-bell me-2" style="color: #2563eb;"></i>Notifications</h6>
+                  <button class="btn btn-sm btn-outline-primary rounded-pill px-3">Mark all read</button>
+                </div>
+                <div class="card-body notification-body">
+                  {% for notif in notifications|slice:":5" %}
+                  <div class="notification-item {% if notif.is_read %}unread{% endif %} d-flex align-items-start mb-3 pb-3 border-bottom">
+                    
+                    {% if 'unpaid' in notif.message|lower or 'bill' in notif.message|lower or 'invoice' in notif.message|lower %}
+                      <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(245,158,11,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
+                        <i class="bi bi-receipt" style="color: #f59e0b;font-size:1.2rem;"></i>
+                      </div>
+                    {% elif 'appointment' in notif.message|lower or 'schedule' in notif.message|lower %}
+                      <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(37,99,235,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
+                        <i class="bi bi-calendar-event" style="color: #2563eb;font-size:1.2rem;"></i>
+                      </div>
+                    {% elif 'registered' in notif.message|lower or 'patient' in notif.message|lower or 'admitted' in notif.message|lower %}
+                      <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(22,163,74,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
+                        <i class="bi bi-person-plus-fill" style="color: #16a34a;font-size:1.2rem;"></i>
+                      </div>
+                    {% elif 'warning' in notif.message|lower or 'alert' in notif.message|lower or 'failed' in notif.message|lower %}
+                      <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(239,68,68,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
+                        <i class="bi bi-exclamation-triangle-fill" style="color: #ef4444;font-size:1.2rem;"></i>
+                      </div>
+                    {% else %}
+                      <div class="notification-icon rounded-circle me-3" style="width:42px;height:42px;background: rgba(37,99,235,0.18);display:flex;align-items:center;justify-content:center;flex-shrink: 0;">
+                        <i class="bi bi-bell-fill" style="color: #2563eb;font-size:1.2rem;"></i>
+                      </div>
+                    {% endif %}
+                    
+                    <div class="flex-grow-1 text-truncate">
+                      <div class="fw-semibold small mb-1 text-wrap">{{ notif.message }}</div>
+                      <small class="text-muted" style="font-size:0.78rem;">{{ notif.created_at|timesince }} ago</small>
+                    </div>
+                  </div>
+                  {% empty %}
+                  <div class="text-center text-muted py-5">
+                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:70px;height:70px;border-radius:50%;background:#f1f5f9;">
+                      <i class="bi bi-bell-slash" style="font-size:2rem;color:#94a3b8;"></i>
+                    </div>
+                    <p class="mb-0 small">No new notifications</p>
+                  </div>
+                  {% endfor %}
+                  
+                  <a href="{% url 'dashboard' %}?page=notifications" class="d-block text-center small mt-3 fw-medium text-decoration-none" style="color: #2563eb;">
+                    View all notifications →
+                  </a>
+                </div>
+              </div>
+
+              <!-- Operations Card Inside Dashboard View -->
+              <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0"><i class="bi bi-list-task me-2" style="color: var(--primary);"></i>Today's Operations</h6>
+                  <span class="badge" style="background: rgba(245,158,11,0.12); color: var(--warning); padding: 0.35em 0.65em;">3 tasks</span>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
+                    <div class="d-flex">
+                      <div class="info-icon danger me-3"><i class="bi bi-currency-dollar"></i></div>
+                      <div>
+                        <div class="fw-semibold small">Follow up pending payment <span class="badge ms-1" style="background: rgba(239,68,68,0.12); color: var(--danger);">High</span></div>
+                        <small class="text-muted">Invoice balance: ₦{{ outstanding_bills|default:3000|intcomma }}</small>
+                      </div>
+                    </div>
+                    <a href="{% url 'dashboard' %}?page=invoices" class="btn btn-sm btn-outline-danger rounded-pill px-3">Open</a>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
+                    <div class="d-flex">
+                      <div class="info-icon warning me-3"><i class="bi bi-telephone"></i></div>
+                      <div>
+                        <div class="fw-semibold small">Confirm tomorrow's appointments <span class="badge ms-1" style="background: rgba(245,158,11,0.12); color: var(--warning);">Medium</span></div>
+                        <small class="text-muted">Send reminders before 6 PM.</small>
+                      </div>
+                    </div>
+                    <a href="{% url 'dashboard' %}?page=appointments" class="btn btn-sm btn-outline-warning rounded-pill px-3">Review</a>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex">
+                      <div class="info-icon success me-3"><i class="bi bi-heart-pulse-fill"></i></div>
+                      <div>
+                        <div class="fw-semibold small">Review active admissions <span class="badge ms-1" style="background: rgba(22,163,74,0.12); color: var(--success);">{{ current_admissions|default:2 }} active</span></div>
+                        <small class="text-muted">Verify ward status and discharge plans.</small>
+                      </div>
+                    </div>
+                    <a href="{% url 'dashboard' %}?page=admissions" class="btn btn-sm btn-outline-success rounded-pill px-3">View</a>
+                  </div>
+                  <a href="{% url 'dashboard' %}?page=tasks" class="d-block text-center small mt-3 text-decoration-none" style="color: var(--primary);">View all tasks →</a>
+                </div>
+              </div>
+
+            </div> <!-- End Right Column -->
+          </div> <!-- End Main row Layout -->
+        </div> <!-- End Dashboard View -->
+    {% endif %}
 
 {% elif page == 'tasks' %}
     <!-- TASKS VIEWS AND OPERATIONS (FULL PAGE VIEW) -->
@@ -1043,7 +1513,7 @@ body {
         </div>
       </div>
     </div>
- 
+
 
 {% elif page == 'patients' %}
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
@@ -1366,488 +1836,2291 @@ body {
   </div>
 
 
-  <!-- APPOINTMENTS -->
+  <!-- ========================================================= -->
+<!-- APPOINTMENTS -->
+<!-- ========================================================= -->
 {% elif page == 'appointments' %}
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h2 class="mb-0"><i class="bi bi-calendar-check"></i> Appointments</h2>
-    <form method="GET" class="d-flex align-items-center gap-2 flex-wrap flex-lg-nowrap">
-      <input type="hidden" name="page" value="appointments">
-      <input type="text" name="search" class="form-control" placeholder="Search patient or doctor..." value="{{ request.GET.search }}" style="min-width: 250px;">
-      <select name="status" class="form-select" style="width: 160px;" onchange="this.form.submit()">
-        <option value="">All Status</option>
-        <option value="scheduled" {% if request.GET.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
-        <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
-        <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-      </select>
-      <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
-      
-      {% if role == 'admin' or role == 'receptionist' %}
-        <a href="{% url 'dashboard' %}?page=create_appointment" class="btn btn-primary ms-lg-auto" style="white-space: nowrap;">
-          <i class="bi bi-plus-circle me-1"></i> Book Appointment
-        </a>
-      {% endif %}
-    </form>
+
+<div class="container-fluid py-2">
+
+  <!-- PAGE HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-calendar-check text-primary me-2"></i>
+        Appointments
+      </h2>
+
+      <p class="text-muted mb-0">
+        Manage patient appointments and consultations
+      </p>
+    </div>
+
+    {% if role|lower == 'admin' or role|lower == 'receptionist' %}
+      <a href="{% url 'dashboard' %}?page=create_appointment"
+         class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>
+        Book Appointment
+      </a>
+    {% endif %}
+
   </div>
+
+
+  <!-- ======================================================= -->
+  <!-- SEARCH AND FILTER -->
+  <!-- ======================================================= -->
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+      <form method="GET"
+            action="{% url 'dashboard' %}"
+            class="row g-3 align-items-end">
+
+        <input type="hidden"
+               name="page"
+               value="appointments">
+
+        <!-- Search -->
+        <div class="col-lg-6">
+          <label class="form-label fw-semibold">
+            <i class="bi bi-search me-1"></i>
+            Search
+          </label>
+
+          <input type="text"
+                 name="search"
+                 class="form-control"
+                 placeholder="Search patient or doctor..."
+                 value="{{ request.GET.search }}">
+        </div>
+
+
+        <!-- Status -->
+        <div class="col-lg-3">
+
+          <label class="form-label fw-semibold">
+            Status
+          </label>
+
+          <select name="status"
+                  class="form-select">
+
+            <option value="">
+              All Status
+            </option>
+
+            <option value="scheduled"
+              {% if request.GET.status == 'scheduled' %}
+                selected
+              {% endif %}>
+              Scheduled
+            </option>
+
+            <option value="completed"
+              {% if request.GET.status == 'completed' %}
+                selected
+              {% endif %}>
+              Completed
+            </option>
+
+            <option value="cancelled"
+              {% if request.GET.status == 'cancelled' %}
+                selected
+              {% endif %}>
+              Cancelled
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- Search Button -->
+        <div class="col-lg-3">
+
+          <div class="d-flex gap-2">
+
+            <button type="submit"
+                    class="btn btn-outline-primary flex-grow-1">
+              <i class="bi bi-search me-1"></i>
+              Search
+            </button>
+
+            <a href="{% url 'dashboard' %}?page=appointments"
+               class="btn btn-outline-secondary"
+               title="Clear filters">
+              <i class="bi bi-x-lg"></i>
+            </a>
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+
+
+  <!-- ======================================================= -->
+  <!-- APPOINTMENTS TABLE -->
+  <!-- ======================================================= -->
 
   <div class="card shadow-sm border-0">
-    <div class="card-body">
+
+    <div class="card-header bg-white border-0 py-3">
+
+      <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+          <h5 class="mb-1">
+            <i class="bi bi-calendar2-week me-2 text-primary"></i>
+            Appointment List
+          </h5>
+
+          <small class="text-muted">
+            {% if role|lower == 'doctor' %}
+              Your assigned appointments
+            {% else %}
+              All hospital appointments
+            {% endif %}
+          </small>
+        </div>
+
+        {% if appointments %}
+          <span class="badge bg-primary">
+            {{ appointments.paginator.count }} appointment{{ appointments.paginator.count|pluralize }}
+          </span>
+        {% endif %}
+
+      </div>
+
+    </div>
+
+
+    <div class="card-body p-0">
+
       {% if appointments %}
+
         <div class="table-responsive">
-          <table class="table table-hover align-middle">
+
+          <table class="table table-hover align-middle mb-0">
+
             <thead class="table-light">
+
               <tr>
-                <th>ID</th>
+                <th class="px-4">ID</th>
                 <th>Patient</th>
                 <th>Doctor</th>
-                <th>Date</th>
+                <th>Date & Time</th>
                 <th>Status</th>
-                <th width="300">Actions</th>
+                <th class="text-center" style="min-width: 300px;">
+                  Actions
+                </th>
               </tr>
+
             </thead>
+
+
             <tbody>
+
               {% for appt in appointments %}
+
                 <tr>
-                  <td><code>#{{ appt.appointment_id }}</code></td>
-                  <td>{{ appt.patient.name }}</td>
-                  <td>Dr. {{ appt.doctor.profile.user.get_full_name }}</td>
-                  <td>{{ appt.date_time|date:"M d, Y H:i" }}</td>
-                  <td>
-                    <span class="badge bg-{% if appt.status == 'scheduled' %}warning{% elif appt.status == 'completed' %}success{% elif appt.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
-                      {{ appt.status|title }}
-                    </span>
+
+                  <!-- Appointment ID -->
+                  <td class="px-4">
+                    <code>
+                      #{{ appt.appointment_id }}
+                    </code>
                   </td>
+
+
+                  <!-- Patient -->
                   <td>
-                    <div class="d-flex flex-wrap gap-2">
-                      {% if role == 'Doctor' and appt.status == 'scheduled' and appt.doctor.profile.user == request.user %}
-                        <a href="{% url 'create_consultation' appt.id %}" class="btn btn-sm btn-success">
-                          <i class="bi bi-play-circle"></i> Consult
-                        </a>
-                      {% endif %}
-                      
-                      <!-- View Patient -->
-                      <a href="{% url 'patient_detail' appt.patient.id %}" class="btn btn-sm btn-info text-white">
-                        <i class="bi bi-eye"></i> View
-                      </a>
-                      
-                      {% if role == 'admin' or role == 'receptionist' %}
-                        <a href="{% url 'edit_appointment' appt.id %}" class="btn btn-sm btn-warning">
-                          <i class="bi bi-pencil-square"></i> Edit
-                        </a>
-                      {% endif %}
-                      
-                      {% if role == 'admin' or role == 'receptionist' %}
-                        <!-- Delete Form -->
-                        <form action="{% url 'delete_appointment' appt.id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete the appointment for {{ appt.patient.name }}?');">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-sm btn-danger">
-                            <i class="bi bi-trash"></i> Delete
-                          </button>
-                        </form>
-                      {% endif %}
+
+                    <div class="d-flex align-items-center gap-2">
+
+                      <div class="rounded-circle bg-primary bg-opacity-10
+                                  text-primary d-flex align-items-center
+                                  justify-content-center"
+                           style="width:40px;height:40px;">
+
+                        <i class="bi bi-person"></i>
+
+                      </div>
+
+                      <div>
+
+                        <div class="fw-semibold">
+                          {{ appt.patient.name }}
+                        </div>
+
+                        {% if appt.patient.patient_id %}
+                          <small class="text-muted">
+                            {{ appt.patient.patient_id }}
+                          </small>
+                        {% endif %}
+
+                      </div>
+
                     </div>
+
                   </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="empty-state text-center py-5">
-          <i class="bi bi-calendar-x fs-1 text-muted"></i>
-          <h5 class="mt-3">No appointments found</h5>
-        </div>
-      {% endif %}
-    </div>
-  </div>
 
-<!-- CREATE APPOINTMENT -->
-{% elif page == 'create_appointment' %}
-  <div class="container py-4">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-primary text-white py-3">
-        <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Book New Appointment</h4>
-      </div>
-      <div class="card-body p-4">
-        <form method="POST" action="{% url 'create_appointment' %}">
-          {% csrf_token %}
-          {% if appointment_form.non_field_errors %}
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-              {{ appointment_form.non_field_errors }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          {% endif %}
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Patient</label>
-              <div class="input-group mb-2">{{ appointment_form.patient }}</div>
-              <div class="input-group">{{ appointment_form.new_patient_name }}</div>
-              <div class="text-danger small mt-1">
-                {{ appointment_form.patient.errors }}
-                {{ appointment_form.new_patient_name.errors }}
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold">Age</label>
-              {{ appointment_form.new_patient_age }}
-              <div class="text-danger small mt-1">{{ appointment_form.new_patient_age.errors }}</div>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold">Gender</label>
-              {{ appointment_form.new_patient_gender }}
-              <div class="text-danger small mt-1">{{ appointment_form.new_patient_gender.errors }}</div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Doctor</label>
-              {{ appointment_form.doctor }}
-              <div class="text-danger small">{{ appointment_form.doctor.errors }}</div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Date & Time</label>
-              {{ appointment_form.date_time }}
-              <div class="text-danger small">{{ appointment_form.date_time.errors }}</div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Status</label>
-              {{ appointment_form.status }}
-              <div class="text-danger small">{{ appointment_form.status.errors }}</div>
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold">Reason for Visit</label>
-              {{ appointment_form.reason }}
-              <div class="text-danger small">{{ appointment_form.reason.errors }}</div>
-            </div>
-          </div>
-          <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary px-4">
-              <i class="bi bi-check-circle-fill me-1"></i>Book Appointment
-            </button>
-            <a href="{% url 'dashboard' %}?page=appointments" class="btn btn-secondary px-4">
-              <i class="bi bi-x-circle me-1"></i>Cancel
-            </a>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
 
-<!-- EDIT APPOINTMENT -->
-{% elif page == 'edit_appointment' %}
-  <div class="container-fluid py-4">
-    <div class="row justify-content-center">
-      <div class="col-lg-8 col-xl-6">
-        <div class="card border-0 shadow-sm">
-          <div class="card-header bg-warning text-white d-flex align-items-center gap-2">
-            <i class="bi bi-calendar2-check"></i>
-            <h5 class="mb-0">Edit Appointment</h5>
-          </div>
+                  <!-- Doctor -->
+                  <td>
 
-          <div class="card-body p-4">
-            <form method="POST" action="{% url 'edit_appointment' appointment.id %}" novalidate>
-              {% csrf_token %}
+                    <div class="fw-semibold">
 
-              {% if appointment_form.non_field_errors %}
-                <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
-                  <i class="bi bi-exclamation-triangle-fill"></i>
-                  <div>{{ appointment_form.non_field_errors }}</div>
-                </div>
-              {% endif %}
+                      <i class="bi bi-person-badge text-primary me-1"></i>
 
-              <!-- Patient Info Display -->
-              {% if appointment.patient %}
-                <div class="alert alert-light border mb-4">
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="mb-0 fw-semibold"><i class="bi bi-person-badge me-2"></i>Patient Info</h6>
-                    {% if role|lower in 'admin receptionist' %}
-                      <a href="{% url 'edit_patient' appointment.patient.id %}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil-square me-1"></i>Edit Patient
-                      </a>
+                      Dr.
+                      {{ appt.doctor.profile.user.get_full_name }}
+
+                    </div>
+
+                  </td>
+
+
+                  <!-- Date -->
+                  <td>
+
+                    <div class="fw-semibold">
+
+                      <i class="bi bi-calendar-event text-primary me-1"></i>
+
+                      {{ appt.date_time|date:"M d, Y" }}
+
+                    </div>
+
+                    <small class="text-muted">
+
+                      <i class="bi bi-clock me-1"></i>
+
+                      {{ appt.date_time|date:"h:i A" }}
+
+                    </small>
+
+                  </td>
+
+
+                  <!-- STATUS -->
+                  <td>
+
+                    {% if appt.status == 'scheduled' %}
+
+                      <span class="badge bg-warning text-dark px-3 py-2">
+                        <i class="bi bi-clock me-1"></i>
+                        Scheduled
+                      </span>
+
+                    {% elif appt.status == 'completed' %}
+
+                      <span class="badge bg-success px-3 py-2">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Completed
+                      </span>
+
+                    {% elif appt.status == 'cancelled' %}
+
+                      <span class="badge bg-danger px-3 py-2">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancelled
+                      </span>
+
+                    {% else %}
+
+                      <span class="badge bg-secondary px-3 py-2">
+                        {{ appt.status|title }}
+                      </span>
+
                     {% endif %}
+
+                  </td>
+
+
+                  <!-- ACTIONS -->
+                  <td>
+
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+
+
+                      <!-- ================================================= -->
+                      <!-- DOCTOR: START CONSULTATION -->
+                      <!-- ================================================= -->
+
+                      {% if role|lower == 'doctor' %}
+
+                        {% if appt.status == 'scheduled' %}
+
+                          {% if appt.doctor.profile.user == request.user %}
+
+                            <a href="{% url 'dashboard' %}?page=consultation&appointment_id={{ appt.id }}"
+   class="btn btn-sm btn-success">
+  <i class="bi bi-play-circle me-1"></i>
+  Start Consultation
+</a>
+
+                          {% endif %}
+
+                        {% endif %}
+
+                      {% endif %}
+
+
+
+                      <!-- ================================================= -->
+                      <!-- COMPLETED: VIEW CONSULTATION -->
+                      <!-- ================================================= -->
+
+                      {% if appt.status == 'completed' %}
+
+                        <a href="{% url 'dashboard' %}?page=view_consultation&appointment_id={{ appt.id }}"
+   class="btn btn-sm btn-info text-white">
+  <i class="bi bi-file-medical me-1"></i>
+  View Consultation
+</a>
+
+                      {% endif %}
+
+
+
+                      <!-- ================================================= -->
+                      <!-- VIEW PATIENT -->
+                      <!-- ================================================= -->
+
+                      <a href="{% url 'patient_detail' appt.patient.id %}"
+                         class="btn btn-sm btn-outline-primary">
+
+                        <i class="bi bi-eye me-1"></i>
+
+                        Patient
+
+                      </a>
+
+
+
+                      <!-- ================================================= -->
+                      <!-- ADMIN / RECEPTIONIST EDIT -->
+                      <!-- ================================================= -->
+
+                      {% if role|lower == 'admin' or role|lower == 'receptionist' %}
+
+                        <a href="{% url 'edit_appointment' appt.id %}"
+                           class="btn btn-sm btn-warning text-white">
+
+                          <i class="bi bi-pencil-square me-1"></i>
+
+                          Edit
+
+                        </a>
+
+                      {% endif %}
+
+
+
+                      <!-- ================================================= -->
+                      <!-- ADMIN / RECEPTIONIST DELETE -->
+                      <!-- ================================================= -->
+
+                      {% if role|lower == 'admin' or role|lower == 'receptionist' %}
+
+                        {% if appt.status == 'scheduled' %}
+
+                          <form action="{% url 'delete_appointment' appt.id %}"
+                                method="POST"
+                                class="d-inline"
+                                onsubmit="return confirm('Are you sure you want to cancel the appointment for {{ appt.patient.name }}?');">
+
+                            {% csrf_token %}
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger">
+
+                              <i class="bi bi-x-circle me-1"></i>
+
+                              Cancel
+
+                            </button>
+
+                          </form>
+
+                        {% endif %}
+
+                      {% endif %}
+
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              {% endfor %}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+      {% else %}
+
+        <!-- EMPTY STATE -->
+
+        <div class="text-center py-5">
+
+          <div class="mb-3">
+
+            <i class="bi bi-calendar-x text-muted"
+               style="font-size:4rem;"></i>
+
+          </div>
+
+          <h5 class="fw-semibold">
+            No appointments found
+          </h5>
+
+          <p class="text-muted mb-3">
+
+            {% if role|lower == 'doctor' %}
+              You currently have no assigned appointments.
+            {% else %}
+              No appointments match your search or filter.
+            {% endif %}
+
+          </p>
+
+
+          {% if role|lower == 'admin' or role|lower == 'receptionist' %}
+
+            <a href="{% url 'dashboard' %}?page=create_appointment"
+               class="btn btn-primary">
+
+              <i class="bi bi-plus-circle me-1"></i>
+
+              Book First Appointment
+
+            </a>
+
+          {% endif %}
+
+        </div>
+
+      {% endif %}
+
+    </div>
+
+
+
+    <!-- ======================================================= -->
+    <!-- PAGINATION -->
+    <!-- ======================================================= -->
+
+    {% if appointments.has_other_pages %}
+
+      <div class="card-footer bg-white border-0">
+
+        <nav aria-label="Appointment pagination">
+
+          <ul class="pagination justify-content-center mb-0">
+
+
+            <!-- Previous -->
+            {% if appointments.has_previous %}
+
+              <li class="page-item">
+
+                <a class="page-link"
+                   href="?page=appointments&page_num={{ appointments.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+
+                  <i class="bi bi-chevron-left"></i>
+
+                </a>
+
+              </li>
+
+            {% else %}
+
+              <li class="page-item disabled">
+
+                <span class="page-link">
+                  <i class="bi bi-chevron-left"></i>
+                </span>
+
+              </li>
+
+            {% endif %}
+
+
+
+            <!-- Current Page -->
+            <li class="page-item active">
+
+              <span class="page-link">
+
+                Page {{ appointments.number }}
+                of {{ appointments.paginator.num_pages }}
+
+              </span>
+
+            </li>
+
+
+
+            <!-- Next -->
+            {% if appointments.has_next %}
+
+              <li class="page-item">
+
+                <a class="page-link"
+                   href="?page=appointments&page_num={{ appointments.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+
+                  <i class="bi bi-chevron-right"></i>
+
+                </a>
+
+              </li>
+
+            {% else %}
+
+              <li class="page-item disabled">
+
+                <span class="page-link">
+
+                  <i class="bi bi-chevron-right"></i>
+
+                </span>
+
+              </li>
+
+            {% endif %}
+
+
+          </ul>
+
+        </nav>
+
+      </div>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- CREATE APPOINTMENT -->
+<!-- ========================================================= -->
+
+{% elif page == 'create_appointment' %}
+
+<div class="container-fluid py-4">
+
+  <div class="row justify-content-center">
+
+    <div class="col-xl-9 col-lg-10">
+
+      <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-primary text-white py-3">
+
+          <div class="d-flex align-items-center gap-2">
+
+            <i class="bi bi-calendar-plus fs-4"></i>
+
+            <div>
+
+              <h4 class="mb-0">
+                Book New Appointment
+              </h4>
+
+              <small class="opacity-75">
+                Create a new patient appointment
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+          <form method="POST"
+                action="{% url 'create_appointment' %}">
+
+            {% csrf_token %}
+
+
+            <!-- FORM ERRORS -->
+
+            {% if appointment_form.non_field_errors %}
+
+              <div class="alert alert-danger">
+
+                <i class="bi bi-exclamation-triangle me-2"></i>
+
+                {{ appointment_form.non_field_errors }}
+
+              </div>
+
+            {% endif %}
+
+
+            <div class="row g-4">
+
+
+              <!-- PATIENT -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+                  Patient
+                </label>
+
+                {{ appointment_form.patient }}
+
+                {% for error in appointment_form.patient.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
                   </div>
-                  <div class="row g-2 small">
-                    <div class="col-6">
-                      <span class="text-muted">Name:</span> {{ appointment.patient.name }}
-                    </div>
-                    <div class="col-6">
-                      <span class="text-muted">Age:</span> 
-                      {% if appointment.patient.age and appointment.patient.age > 0 %}
-                        {{ appointment.patient.age }} years
-                      {% else %}
-                        <span class="text-muted">Not set</span>
-                      {% endif %}
-                    </div>
-                    <div class="col-6">
-                      <span class="text-muted">Gender:</span>
-                      {% if appointment.patient.gender == 'M' %}
-                        <span class="badge bg-primary">Male</span>
-                      {% elif appointment.patient.gender == 'F' %}
-                        <span class="badge bg-danger">Female</span>
-                      {% else %}
-                        <span class="text-muted">Not set</span>
-                      {% endif %}
-                    </div>
-                    <div class="col-6">
-                      <span class="text-muted">Contact:</span> {{ appointment.patient.contact|default:"Not set" }}
-                    </div>
-                    <div class="col-12">
-                      <span class="text-muted">Address:</span> 
-                      {% if appointment.patient.address %}
-                        {{ appointment.patient.address|linebreaksbr }}
-                      {% else %}
-                        <span class="text-muted">Not set</span>
-                      {% endif %}
-                    </div>
-                  </div>
+
+                {% endfor %}
+
+                <div class="mt-2">
+
+                  <small class="text-muted">
+                    Or create a new patient:
+                  </small>
+
                 </div>
-              {% endif %}
+
+                <div class="mt-2">
+
+                  {{ appointment_form.new_patient_name }}
+
+                </div>
+
+                {% for error in appointment_form.new_patient_name.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- AGE -->
+
+              <div class="col-md-3">
+
+                <label class="form-label fw-semibold">
+                  Age
+                </label>
+
+                {{ appointment_form.new_patient_age }}
+
+                {% for error in appointment_form.new_patient_age.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- GENDER -->
+
+              <div class="col-md-3">
+
+                <label class="form-label fw-semibold">
+                  Gender
+                </label>
+
+                {{ appointment_form.new_patient_gender }}
+
+                {% for error in appointment_form.new_patient_gender.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- DOCTOR -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-person-badge me-1"></i>
+                  Doctor
+                </label>
+
+                {{ appointment_form.doctor }}
+
+                {% for error in appointment_form.doctor.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- DATE -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+
+                  <i class="bi bi-calendar-event me-1"></i>
+
+                  Date & Time
+
+                </label>
+
+                {{ appointment_form.date_time }}
+
+                {% for error in appointment_form.date_time.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- STATUS -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+                  Status
+                </label>
+
+                {{ appointment_form.status }}
+
+                {% for error in appointment_form.status.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- REASON -->
+
+              <div class="col-12">
+
+                <label class="form-label fw-semibold">
+                  Reason for Visit
+                </label>
+
+                {{ appointment_form.reason }}
+
+                {% for error in appointment_form.reason.errors %}
+
+                  <div class="text-danger small mt-1">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="d-flex gap-2 mt-4 pt-3 border-top">
+
+              <button type="submit"
+                      class="btn btn-primary px-4">
+
+                <i class="bi bi-check-circle-fill me-1"></i>
+
+                Book Appointment
+
+              </button>
+
+              <a href="{% url 'dashboard' %}?page=appointments"
+                 class="btn btn-outline-secondary px-4">
+
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Cancel
+
+              </a>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- EDIT APPOINTMENT -->
+<!-- ========================================================= -->
+
+{% elif page == 'edit_appointment' %}
+
+<div class="container-fluid py-4">
+
+  <div class="row justify-content-center">
+
+    <div class="col-lg-9 col-xl-8">
+
+      <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-warning text-white py-3">
+
+          <div class="d-flex align-items-center gap-2">
+
+            <i class="bi bi-calendar2-check fs-4"></i>
+
+            <h5 class="mb-0">
+              Edit Appointment
+            </h5>
+
+          </div>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+
+          <!-- PATIENT INFORMATION -->
+
+          {% if appointment.patient %}
+
+            <div class="alert alert-light border mb-4">
+
+              <div class="d-flex justify-content-between align-items-start mb-3">
+
+                <h6 class="fw-semibold mb-0">
+
+                  <i class="bi bi-person-badge me-2"></i>
+
+                  Patient Information
+
+                </h6>
+
+
+                {% if role|lower == 'admin' or role|lower == 'receptionist' %}
+
+                  <a href="{% url 'edit_patient' appointment.patient.id %}"
+                     class="btn btn-sm btn-outline-primary">
+
+                    <i class="bi bi-pencil-square me-1"></i>
+
+                    Edit Patient
+
+                  </a>
+
+                {% endif %}
+
+              </div>
+
+
+              <div class="row g-3 small">
+
+                <div class="col-md-6">
+
+                  <span class="text-muted">
+                    Name:
+                  </span>
+
+                  <strong>
+                    {{ appointment.patient.name }}
+                  </strong>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                  <span class="text-muted">
+                    Age:
+                  </span>
+
+                  {% if appointment.patient.age %}
+
+                    {{ appointment.patient.age }} years
+
+                  {% else %}
+
+                    <span class="text-muted">
+                      Not set
+                    </span>
+
+                  {% endif %}
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                  <span class="text-muted">
+                    Gender:
+                  </span>
+
+                  {{ appointment.patient.gender|default:"Not set" }}
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                  <span class="text-muted">
+                    Contact:
+                  </span>
+
+                  {{ appointment.patient.contact|default:"Not set" }}
+
+                </div>
+
+
+                <div class="col-12">
+
+                  <span class="text-muted">
+                    Address:
+                  </span>
+
+                  {% if appointment.patient.address %}
+
+                    {{ appointment.patient.address|linebreaksbr }}
+
+                  {% else %}
+
+                    <span class="text-muted">
+                      Not set
+                    </span>
+
+                  {% endif %}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          {% endif %}
+
+
+
+          <!-- FORM -->
+
+          <form method="POST"
+                action="{% url 'edit_appointment' appointment.id %}">
+
+            {% csrf_token %}
+
+
+            {% if appointment_form.non_field_errors %}
+
+              <div class="alert alert-danger">
+
+                {{ appointment_form.non_field_errors }}
+
+              </div>
+
+            {% endif %}
+
+
+            <div class="row g-3">
+
+
+              <!-- PATIENT -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+                  Patient
+                </label>
+
+                <div class="input-group">
+
+                  {{ appointment_form.patient }}
+
+                  {% if appointment.patient %}
+
+                    <a href="{% url 'patient_detail' appointment.patient.id %}"
+                       class="btn btn-outline-info">
+
+                      <i class="bi bi-person-lines-fill"></i>
+
+                    </a>
+
+                  {% endif %}
+
+                </div>
+
+                {% for error in appointment_form.patient.errors %}
+
+                  <div class="text-danger small">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- DOCTOR -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+                  Doctor
+                </label>
+
+                {{ appointment_form.doctor }}
+
+                {% for error in appointment_form.doctor.errors %}
+
+                  <div class="text-danger small">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- DATE -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+                  Date & Time
+                </label>
+
+                {{ appointment_form.date_time }}
+
+                {% for error in appointment_form.date_time.errors %}
+
+                  <div class="text-danger small">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- STATUS -->
+
+              <div class="col-md-6">
+
+                <label class="form-label fw-semibold">
+                  Status
+                </label>
+
+                {{ appointment_form.status }}
+
+                {% for error in appointment_form.status.errors %}
+
+                  <div class="text-danger small">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- REASON -->
+
+              <div class="col-12">
+
+                <label class="form-label fw-semibold">
+                  Reason / Notes
+                </label>
+
+                {{ appointment_form.reason }}
+
+                {% for error in appointment_form.reason.errors %}
+
+                  <div class="text-danger small">
+                    {{ error }}
+                  </div>
+
+                {% endfor %}
+
+              </div>
+
+            </div>
+
+
+            <div class="d-flex gap-2 mt-4 pt-3 border-top">
+
+              <button type="submit"
+                      class="btn btn-warning text-white px-4">
+
+                <i class="bi bi-check-circle me-1"></i>
+
+                Update Appointment
+
+              </button>
+
+
+              <a href="{% url 'dashboard' %}?page=appointments"
+                 class="btn btn-outline-secondary px-4">
+
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Back
+
+              </a>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- START CONSULTATION -->
+<!-- ========================================================= -->
+
+{% elif page == 'consultation' %}
+
+<div class="container-fluid py-4">
+
+  <div class="row justify-content-center">
+
+    <div class="col-xl-9 col-lg-10">
+
+      <div class="card border-0 shadow-sm">
+
+
+        <!-- HEADER -->
+
+        <div class="card-header bg-success text-white py-3">
+
+          <div class="d-flex align-items-center gap-2">
+
+            <i class="bi bi-clipboard2-pulse fs-4"></i>
+
+            <div>
+
+              <h4 class="mb-0">
+                Start Consultation
+              </h4>
+
+              <small class="opacity-75">
+                Record the patient's consultation
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+
+          <!-- PATIENT SUMMARY -->
+
+          <div class="card bg-light border-0 mb-4">
+
+            <div class="card-body">
 
               <div class="row g-3">
-                <!-- Patient -->
+
                 <div class="col-md-6">
-                  <label class="form-label fw-semibold">Patient</label>
-                  <div class="input-group">
-                    {{ appointment_form.patient }}
-                    {% if appointment.patient %}
-                      <a href="{% url 'patient_detail' appointment.patient.id %}" class="btn btn-outline-info" title="View patient">
-                        <i class="bi bi-person-lines-fill"></i>
-                      </a>
-                    {% endif %}
-                  </div>
-                  {% for error in appointment_form.patient.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
+
+                  <small class="text-muted d-block">
+                    Patient
+                  </small>
+
+                  <strong class="fs-5">
+                    {{ appointment.patient.name }}
+                  </strong>
+
                 </div>
 
-                <!-- Doctor -->
+
                 <div class="col-md-6">
-                  <label class="form-label fw-semibold">Doctor</label>
-                  {{ appointment_form.doctor }}
-                  {% for error in appointment_form.doctor.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
+
+                  <small class="text-muted d-block">
+                    Doctor
+                  </small>
+
+                  <strong>
+                    Dr.
+                    {{ appointment.doctor.profile.user.get_full_name }}
+                  </strong>
+
                 </div>
 
-                <!-- Date & Time -->
+
                 <div class="col-md-6">
-                  <label class="form-label fw-semibold">Date & Time</label>
-                  {{ appointment_form.date_time }}
-                  {% for error in appointment_form.date_time.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
+
+                  <small class="text-muted d-block">
+                    Appointment Date
+                  </small>
+
+                  {{ appointment.date_time|date:"M d, Y h:i A" }}
+
                 </div>
 
-                <!-- Status -->
+
                 <div class="col-md-6">
-                  <label class="form-label fw-semibold">Status</label>
-                  {{ appointment_form.status }}
-                  {% for error in appointment_form.status.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
+
+                  <small class="text-muted d-block">
+                    Reason for Visit
+                  </small>
+
+                  {{ appointment.reason|default:"Not specified" }}
+
                 </div>
 
-                <!-- Reason -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Reason / Notes</label>
-                  {{ appointment_form.reason }}
-                  {% for error in appointment_form.reason.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
-                </div>
               </div>
 
-              <!-- Actions -->
-              <div class="d-flex gap-2 mt-4 pt-3 border-top">
-                <button type="submit" class="btn btn-warning text-white px-4">
-                  <i class="bi bi-check-circle me-1"></i> Update Appointment
-                </button>
-                <a href="{% url 'dashboard' %}?page=appointments{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="btn btn-outline-secondary px-4">
-                  <i class="bi bi-arrow-left me-1"></i> Back
-                </a>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<!-- PATIENT DETAIL -->
-{% elif page == 'patient_detail' %}
-  <div class="container-fluid py-4">
-    <div class="row justify-content-center">
-      <div class="col-xl-10 col-lg-11">
-        
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 class="mb-1"><i class="bi bi-person-vcard text-primary me-2"></i>Patient Details</h2>
-            <p class="text-muted mb-0">Patient ID: <code>{{ patient.patient_id }}</code></p>
-          </div>
-          <a href="{% url 'dashboard' %}?page=patients" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back to Patients
-          </a>
-        </div>
-
-        <!-- Info Cards -->
-        <div class="row g-4 mb-4">
-          <!-- Personal Info -->
-          <div class="col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-              <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Personal Information</h5>
-                {% if role|lower in 'admin receptionist' %}
-                  <a href="{% url 'edit_patient' patient.id %}" class="btn btn-sm btn-warning text-white">
-                    <i class="bi bi-pencil-square me-1"></i>Edit
-                  </a>
-                {% endif %}
-              </div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label class="text-muted small fw-semibold text-uppercase">Full Name</label>
-                    <p class="mb-0 fs-5 fw-semibold text-capitalize">{{ patient.name|default:"Not set" }}</p>
-                  </div>
-                  
-                  <div class="col-6">
-                    <label class="text-muted small fw-semibold text-uppercase">Age</label>
-                    <p class="mb-0">
-                      {% if patient.age and patient.age > 0 %}
-                        {{ patient.age }} years
-                      {% else %}
-                        <span class="badge bg-secondary px-2 py-1">Not set</span>
-                      {% endif %}
-                    </p>
-                  </div>
-                  
-                  <div class="col-6">
-                    <label class="text-muted small fw-semibold text-uppercase">Gender</label>
-                    <p class="mb-0">
-                      {% if patient.gender %}
-                        {% if patient.gender|lower == 'male' %}
-                          <span class="badge bg-primary px-3 py-2">
-                            <i class="bi bi-gender-male me-1"></i>{{ patient.gender }}
-                          </span>
-                        {% elif patient.gender|lower == 'female' %}
-                          <span class="badge bg-danger px-3 py-2">
-                            <i class="bi bi-gender-female me-1"></i>{{ patient.gender }}
-                          </span>
-                        {% else %}
-                          <span class="badge bg-info px-3 py-2">
-                            {{ patient.gender }}
-                          </span>
-                        {% endif %}
-                      {% else %}
-                        <span class="badge bg-secondary px-3 py-2">
-                          <i class="bi bi-question-circle me-1"></i>Not set
-                        </span>
-                      {% endif %}
-                    </p>
-                  </div>
-                  
-                  <div class="col-12">
-                    <label class="text-muted small fw-semibold text-uppercase">Contact</label>
-                    <p class="mb-0">
-                      {% if patient.contact %}
-                        <i class="bi bi-telephone-fill me-2 text-primary"></i>{{ patient.contact }}
-                      {% else %}
-                        <span class="badge bg-secondary px-2 py-1">Not set</span>
-                      {% endif %}
-                    </p>
-                  </div>
-                  
-                  <div class="col-12">
-                    <label class="text-muted small fw-semibold text-uppercase">Address</label>
-                    <p class="mb-0">
-                      {% if patient.address %}
-                        <i class="bi bi-geo-alt-fill me-2 text-primary"></i>{{ patient.address|linebreaksbr|title }}
-                      {% else %}
-                        <span class="badge bg-secondary px-2 py-1">Not set</span>
-                      {% endif %}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
+
           </div>
 
-          <!-- Medical Info -->
-          <div class="col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-              <div class="card-header bg-light border-0">
-                <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Medical Information</h5>
+
+
+          <!-- CONSULTATION FORM -->
+
+          <form method="POST">
+
+            {% csrf_token %}
+
+
+            {% if form.non_field_errors %}
+
+              <div class="alert alert-danger">
+
+                {{ form.non_field_errors }}
+
               </div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label class="text-muted small fw-semibold">Patient ID</label>
-                    <p class="mb-0"><code class="fs-5">{{ patient.patient_id }}</code></p>
-                  </div>
-                  <div class="col-12">
-                    <label class="text-muted small fw-semibold">Registered On</label>
-                    <p class="mb-0"><i class="bi bi-calendar3 me-1"></i>{{ patient.created_at|date:"F d, Y" }}</p>
-                  </div>
-                  <div class="col-12">
-                    <label class="text-muted small fw-semibold">Last Updated</label>
-                    <p class="mb-0"><i class="bi bi-clock-history me-1"></i>{{ patient.updated_at|date:"F d, Y H:i" }}</p>
-                  </div>
+
+            {% endif %}
+
+
+            <!-- VISIT NOTES -->
+
+            <div class="mb-4">
+
+              <label class="form-label fw-semibold">
+
+                <i class="bi bi-journal-text me-1"></i>
+
+                Visit Notes
+
+              </label>
+
+              {{ form.visit_notes }}
+
+              {% for error in form.visit_notes.errors %}
+
+                <div class="text-danger small mt-1">
+                  {{ error }}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Appointments Table -->
-        <div class="card border-0 shadow-sm">
-          <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Recent Appointments</h5>
-            {% if role|lower in 'admin receptionist' %}
-              <a href="{% url 'dashboard' %}?page=create_appointment" class="btn btn-sm btn-primary">
-                <i class="bi bi-plus-circle me-1"></i> Book New
+              {% endfor %}
+
+            </div>
+
+
+            <!-- DIAGNOSIS -->
+
+            <div class="mb-4">
+
+              <label class="form-label fw-semibold">
+
+                <i class="bi bi-clipboard2-pulse me-1"></i>
+
+                Diagnosis
+
+              </label>
+
+              {{ form.diagnosis }}
+
+              {% for error in form.diagnosis.errors %}
+
+                <div class="text-danger small mt-1">
+                  {{ error }}
+                </div>
+
+              {% endfor %}
+
+            </div>
+
+
+            <!-- PRESCRIPTION -->
+
+            <div class="mb-4">
+
+              <label class="form-label fw-semibold">
+
+                <i class="bi bi-capsule me-1"></i>
+
+                Prescription
+
+              </label>
+
+              {{ form.prescription }}
+
+              {% for error in form.prescription.errors %}
+
+                <div class="text-danger small mt-1">
+                  {{ error }}
+                </div>
+
+              {% endfor %}
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="d-flex gap-2 pt-3 border-top">
+
+              <button type="submit"
+                      class="btn btn-success px-4">
+
+                <i class="bi bi-check-circle-fill me-1"></i>
+
+                Complete Consultation
+
+              </button>
+
+
+              <a href="{% url 'dashboard' %}?page=appointments"
+                 class="btn btn-outline-secondary px-4">
+
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Cancel
+
               </a>
-            {% endif %}
-          </div>
-          <div class="card-body p-0">
-            {% if appointments %}
-              <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th class="px-4 py-3">Date & Time</th>
-                      <th class="px-4 py-3">Doctor</th>
-                      <th class="px-4 py-3">Reason</th>
-                      <th class="px-4 py-3 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for appt in appointments %}
-                      <tr>
-                        <td class="px-4 py-3">
-                          <i class="bi bi-calendar-event text-muted me-1"></i>
-                          {{ appt.date_time|date:"M d, Y H:i" }}
-                        </td>
-                        <td class="px-4 py-3">Dr. {{ appt.doctor.profile.user.get_full_name }}</td>
-                        <td class="px-4 py-3 text-truncate" style="max-width: 250px;">{{ appt.reason|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">
-                          <span class="badge bg-{% if appt.status == 'scheduled' %}warning{% elif appt.status == 'completed' %}success{% elif appt.status == 'cancelled' %}danger{% else %}secondary{% endif %} px-3 py-2">
-                            {{ appt.status|title }}
-                          </span>
-                        </td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <div class="text-center py-5">
-                <i class="bi bi-calendar-x fs-1 text-muted"></i>
-                <p class="text-muted mt-3 mb-0">No appointments recorded yet</p>
-              </div>
-            {% endif %}
-          </div>
+
+            </div>
+
+          </form>
+
         </div>
 
       </div>
+
     </div>
+
   </div>
+
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- VIEW CONSULTATION -->
+<!-- ========================================================= -->
+
+{% elif page == 'view_consultation' %}
+
+<div class="container-fluid py-4">
+
+  <div class="row justify-content-center">
+
+    <div class="col-xl-9 col-lg-10">
+
+      <div class="card border-0 shadow-sm">
+
+
+        <!-- HEADER -->
+
+        <div class="card-header bg-primary text-white py-3">
+
+          <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+              <h4 class="mb-1">
+
+                <i class="bi bi-file-medical me-2"></i>
+
+                Consultation Details
+
+              </h4>
+
+              <small class="opacity-75">
+                Completed patient consultation
+              </small>
+
+            </div>
+
+
+            <a href="{% url 'dashboard' %}?page=appointments"
+               class="btn btn-light btn-sm">
+
+              <i class="bi bi-arrow-left me-1"></i>
+
+              Back
+
+            </a>
+
+          </div>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+
+          <!-- PATIENT DETAILS -->
+
+          <div class="row g-3 mb-4">
+
+            <div class="col-md-6">
+
+              <label class="text-muted small fw-semibold">
+                Patient
+              </label>
+
+              <div class="fs-5 fw-semibold">
+                {{ appointment.patient.name }}
+              </div>
+
+            </div>
+
+
+            <div class="col-md-6">
+
+              <label class="text-muted small fw-semibold">
+                Doctor
+              </label>
+
+              <div class="fs-5 fw-semibold">
+
+                Dr.
+                {{ appointment.doctor.profile.user.get_full_name }}
+
+              </div>
+
+            </div>
+
+
+            <div class="col-md-6">
+
+              <label class="text-muted small fw-semibold">
+                Appointment Date
+              </label>
+
+              <div>
+
+                <i class="bi bi-calendar-event me-1"></i>
+
+                {{ appointment.date_time|date:"M d, Y h:i A" }}
+
+              </div>
+
+            </div>
+
+
+            <div class="col-md-6">
+
+              <label class="text-muted small fw-semibold">
+                Status
+              </label>
+
+              <div>
+
+                <span class="badge bg-success px-3 py-2">
+
+                  <i class="bi bi-check-circle me-1"></i>
+
+                  Completed
+
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <hr>
+
+
+          <!-- VISIT NOTES -->
+
+          <div class="mb-4">
+
+            <label class="fw-semibold mb-2">
+
+              <i class="bi bi-journal-text me-1 text-primary"></i>
+
+              Visit Notes
+
+            </label>
+
+            <div class="border rounded p-3 bg-light">
+
+              {% if consultation.visit_notes %}
+
+                {{ consultation.visit_notes|linebreaks }}
+
+              {% else %}
+
+                <span class="text-muted">
+                  No visit notes recorded.
+                </span>
+
+              {% endif %}
+
+            </div>
+
+          </div>
+
+
+          <!-- DIAGNOSIS -->
+
+          <div class="mb-4">
+
+            <label class="fw-semibold mb-2">
+
+              <i class="bi bi-clipboard2-pulse me-1 text-danger"></i>
+
+              Diagnosis
+
+            </label>
+
+            <div class="border rounded p-3 bg-light">
+
+              {% if consultation.diagnosis %}
+
+                {{ consultation.diagnosis|linebreaks }}
+
+              {% else %}
+
+                <span class="text-muted">
+                  No diagnosis recorded.
+                </span>
+
+              {% endif %}
+
+            </div>
+
+          </div>
+
+
+          <!-- PRESCRIPTION -->
+
+          <div class="mb-4">
+
+            <label class="fw-semibold mb-2">
+
+              <i class="bi bi-capsule me-1 text-success"></i>
+
+              Prescription
+
+            </label>
+
+            <div class="border rounded p-3 bg-light">
+
+              {% if consultation.prescription %}
+
+                {{ consultation.prescription|linebreaks }}
+
+              {% else %}
+
+                <span class="text-muted">
+                  No prescription recorded.
+                </span>
+
+              {% endif %}
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- PATIENT DETAIL -->
+<!-- ========================================================= -->
+
+{% elif page == 'patient_detail' %}
+
+<div class="container-fluid py-4">
+
+  <div class="row justify-content-center">
+
+    <div class="col-xl-10 col-lg-11">
+
+
+      <!-- HEADER -->
+
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+
+        <div>
+
+          <h2 class="mb-1">
+
+            <i class="bi bi-person-vcard text-primary me-2"></i>
+
+            Patient Details
+
+          </h2>
+
+          <p class="text-muted mb-0">
+
+            Patient ID:
+
+            <code>
+              {{ patient.patient_id }}
+            </code>
+
+          </p>
+
+        </div>
+
+
+        <a href="{% url 'dashboard' %}?page=patients"
+           class="btn btn-outline-secondary">
+
+          <i class="bi bi-arrow-left me-1"></i>
+
+          Back to Patients
+
+        </a>
+
+      </div>
+
+
+
+      <!-- ===================================================== -->
+      <!-- PATIENT INFORMATION -->
+      <!-- ===================================================== -->
+
+      <div class="row g-4 mb-4">
+
+
+        <!-- PERSONAL INFORMATION -->
+
+        <div class="col-md-6">
+
+          <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-header bg-light border-0
+                        d-flex justify-content-between align-items-center">
+
+              <h5 class="mb-0">
+
+                <i class="bi bi-person-badge me-2"></i>
+
+                Personal Information
+
+              </h5>
+
+
+              {% if role|lower == 'admin' or role|lower == 'receptionist' %}
+
+                <a href="{% url 'edit_patient' patient.id %}"
+                   class="btn btn-sm btn-warning text-white">
+
+                  <i class="bi bi-pencil-square me-1"></i>
+
+                  Edit
+
+                </a>
+
+              {% endif %}
+
+            </div>
+
+
+            <div class="card-body">
+
+              <div class="row g-3">
+
+
+                <!-- NAME -->
+
+                <div class="col-12">
+
+                  <label class="text-muted small fw-semibold text-uppercase">
+
+                    Full Name
+
+                  </label>
+
+                  <p class="mb-0 fs-5 fw-semibold">
+
+                    {{ patient.name|default:"Not set" }}
+
+                  </p>
+
+                </div>
+
+
+                <!-- AGE -->
+
+                <div class="col-6">
+
+                  <label class="text-muted small fw-semibold text-uppercase">
+
+                    Age
+
+                  </label>
+
+                  <p class="mb-0">
+
+                    {% if patient.age and patient.age > 0 %}
+
+                      {{ patient.age }} years
+
+                    {% else %}
+
+                      <span class="badge bg-secondary">
+                        Not set
+                      </span>
+
+                    {% endif %}
+
+                  </p>
+
+                </div>
+
+
+                <!-- GENDER -->
+
+                <div class="col-6">
+
+                  <label class="text-muted small fw-semibold text-uppercase">
+
+                    Gender
+
+                  </label>
+
+                  <p class="mb-0">
+
+                    {% if patient.gender %}
+
+                      {% if patient.gender|lower == 'male' %}
+
+                        <span class="badge bg-primary px-3 py-2">
+
+                          <i class="bi bi-gender-male me-1"></i>
+
+                          {{ patient.gender }}
+
+                        </span>
+
+                      {% elif patient.gender|lower == 'female' %}
+
+                        <span class="badge bg-danger px-3 py-2">
+
+                          <i class="bi bi-gender-female me-1"></i>
+
+                          {{ patient.gender }}
+
+                        </span>
+
+                      {% else %}
+
+                        <span class="badge bg-info px-3 py-2">
+
+                          {{ patient.gender }}
+
+                        </span>
+
+                      {% endif %}
+
+                    {% else %}
+
+                      <span class="badge bg-secondary">
+
+                        Not set
+
+                      </span>
+
+                    {% endif %}
+
+                  </p>
+
+                </div>
+
+
+                <!-- CONTACT -->
+
+                <div class="col-12">
+
+                  <label class="text-muted small fw-semibold text-uppercase">
+
+                    Contact
+
+                  </label>
+
+                  <p class="mb-0">
+
+                    {% if patient.contact %}
+
+                      <i class="bi bi-telephone-fill me-2 text-primary"></i>
+
+                      {{ patient.contact }}
+
+                    {% else %}
+
+                      <span class="badge bg-secondary">
+                        Not set
+                      </span>
+
+                    {% endif %}
+
+                  </p>
+
+                </div>
+
+
+                <!-- ADDRESS -->
+
+                <div class="col-12">
+
+                  <label class="text-muted small fw-semibold text-uppercase">
+
+                    Address
+
+                  </label>
+
+                  <p class="mb-0">
+
+                    {% if patient.address %}
+
+                      <i class="bi bi-geo-alt-fill me-2 text-primary"></i>
+
+                      {{ patient.address|linebreaksbr }}
+
+                    {% else %}
+
+                      <span class="badge bg-secondary">
+                        Not set
+                      </span>
+
+                    {% endif %}
+
+                  </p>
+
+                </div>
+
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- MEDICAL INFORMATION -->
+
+        <div class="col-md-6">
+
+          <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-header bg-light border-0">
+
+              <h5 class="mb-0">
+
+                <i class="bi bi-clipboard2-pulse me-2"></i>
+
+                Medical Information
+
+              </h5>
+
+            </div>
+
+
+            <div class="card-body">
+
+              <div class="row g-3">
+
+
+                <!-- PATIENT ID -->
+
+                <div class="col-12">
+
+                  <label class="text-muted small fw-semibold">
+                    Patient ID
+                  </label>
+
+                  <p class="mb-0">
+
+                    <code class="fs-5">
+                      {{ patient.patient_id }}
+                    </code>
+
+                  </p>
+
+                </div>
+
+
+                <!-- CREATED -->
+
+                <div class="col-12">
+
+                  <label class="text-muted small fw-semibold">
+                    Registered On
+                  </label>
+
+                  <p class="mb-0">
+
+                    <i class="bi bi-calendar3 me-1"></i>
+
+                    {{ patient.created_at|date:"F d, Y" }}
+
+                  </p>
+
+                </div>
+
+
+                <!-- UPDATED -->
+
+                <div class="col-12">
+
+                  <label class="text-muted small fw-semibold">
+                    Last Updated
+                  </label>
+
+                  <p class="mb-0">
+
+                    {% if patient.updated_at %}
+
+                      <i class="bi bi-clock-history me-1"></i>
+
+                      {{ patient.updated_at|date:"F d, Y H:i" }}
+
+                    {% else %}
+
+                      <span class="text-muted">
+                        Not available
+                      </span>
+
+                    {% endif %}
+
+                  </p>
+
+                </div>
+
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ===================================================== -->
+      <!-- RECENT APPOINTMENTS -->
+      <!-- ===================================================== -->
+
+      <div class="card border-0 shadow-sm">
+
+
+        <div class="card-header bg-light border-0
+                    d-flex justify-content-between align-items-center">
+
+          <h5 class="mb-0">
+
+            <i class="bi bi-calendar-check me-2"></i>
+
+            Recent Appointments
+
+          </h5>
+
+
+          {% if role|lower == 'admin' or role|lower == 'receptionist' %}
+
+            <a href="{% url 'dashboard' %}?page=create_appointment"
+               class="btn btn-sm btn-primary">
+
+              <i class="bi bi-plus-circle me-1"></i>
+
+              Book New
+
+            </a>
+
+          {% endif %}
+
+        </div>
+
+
+        <div class="card-body p-0">
+
+
+          {% if appointments %}
+
+            <div class="table-responsive">
+
+              <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+
+                  <tr>
+
+                    <th class="px-4 py-3">
+                      Date & Time
+                    </th>
+
+                    <th>
+                      Doctor
+                    </th>
+
+                    <th>
+                      Reason
+                    </th>
+
+                    <th class="text-center">
+                      Status
+                    </th>
+
+                    <th class="text-center">
+                      Action
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                  {% for appt in appointments %}
+
+                    <tr>
+
+                      <!-- DATE -->
+
+                      <td class="px-4 py-3">
+
+                        <i class="bi bi-calendar-event
+                                  text-primary me-1"></i>
+
+                        {{ appt.date_time|date:"M d, Y" }}
+
+                        <br>
+
+                        <small class="text-muted">
+
+                          {{ appt.date_time|date:"h:i A" }}
+
+                        </small>
+
+                      </td>
+
+
+                      <!-- DOCTOR -->
+
+                      <td class="py-3">
+
+                        Dr.
+                        {{ appt.doctor.profile.user.get_full_name }}
+
+                      </td>
+
+
+                      <!-- REASON -->
+
+                      <td class="py-3">
+
+                        {{ appt.reason|default:"-" }}
+
+                      </td>
+
+
+                      <!-- STATUS -->
+
+                      <td class="text-center py-3">
+
+                        {% if appt.status == 'scheduled' %}
+
+                          <span class="badge bg-warning text-dark">
+
+                            Scheduled
+
+                          </span>
+
+                        {% elif appt.status == 'completed' %}
+
+                          <span class="badge bg-success">
+
+                            Completed
+
+                          </span>
+
+                        {% elif appt.status == 'cancelled' %}
+
+                          <span class="badge bg-danger">
+
+                            Cancelled
+
+                          </span>
+
+                        {% else %}
+
+                          <span class="badge bg-secondary">
+
+                            {{ appt.status|title }}
+
+                          </span>
+
+                        {% endif %}
+
+                      </td>
+
+
+                      <!-- ACTION -->
+
+                      <td class="text-center py-3">
+
+                        {% if appt.status == 'completed' %}
+
+                          <a href="{% url 'view_consultation' appt.id %}"
+                             class="btn btn-sm btn-outline-info">
+
+                            <i class="bi bi-file-medical me-1"></i>
+
+                            Consultation
+
+                          </a>
+
+                        {% elif role|lower == 'doctor' and appt.status == 'scheduled' %}
+
+                          {% if appt.doctor.profile.user == request.user %}
+
+                            <a href="{% url 'create_consultation' appt.id %}"
+                               class="btn btn-sm btn-success">
+
+                              <i class="bi bi-play-circle me-1"></i>
+
+                              Consult
+
+                            </a>
+
+                          {% endif %}
+
+                        {% else %}
+
+                          <span class="text-muted">
+                            —
+                          </span>
+
+                        {% endif %}
+
+                      </td>
+
+                    </tr>
+
+                  {% endfor %}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+
+          {% else %}
+
+            <div class="text-center py-5">
+
+              <i class="bi bi-calendar-x fs-1 text-muted"></i>
+
+              <p class="text-muted mt-3 mb-0">
+
+                No appointments recorded yet
+
+              </p>
+
+            </div>
+
+          {% endif %}
+
+
+        </div>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+</div>
+
 
 
 {% elif page == 'admissions' %}
@@ -2017,7 +4290,7 @@ body {
               <tr>
                 <td class="ps-4 py-3">
                   <div class="d-flex align-items-center">
-                    <div class="rounded-circle me-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 40px; height: 40px; background: {{ admission.patient.avatar_color|default:'#2563eb' }}; font-size: 0.85rem; min-width: 40px;">
+                    <div class="rounded-circle me-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="--avatar-bg: {{ admission.patient.avatar_color|default:'#2563eb' }}; background: var(--avatar-bg); width: 40px; height: 40px; font-size: 0.85rem; min-width: 40px;">
                       {{ admission.patient.name|slice:":2"|upper }}
                     </div>
                     <div class="text-truncate">
@@ -2118,7 +4391,7 @@ body {
           {% for adm in recent_admissions|slice:":3" %}
             <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-light">
               <div class="d-flex align-items-center">
-                <div class="rounded-circle me-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 36px; height: 36px; background: {{ adm.patient.avatar_color|default:'#a78bfa' }}; font-size: 0.75rem;">
+                <div class="rounded-circle me-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="--avatar-bg: {{ adm.patient.avatar_color|default:'#a78bfa' }}; background: var(--avatar-bg); width: 36px; height: 36px; font-size: 0.75rem;">
                   {{ adm.patient.name|slice:":2"|upper }}
                 </div>
                 <div>
@@ -2147,7 +4420,7 @@ body {
                   <small class="badge bg-light text-dark border fw-medium">{{ w.count }} patients ({{ w.percent }}%)</small>
                 </div>
                 <div class="progress rounded-pill shadow-inner" style="height: 8px;">
-                  <div class="progress-bar bg-primary rounded-pill" style="width: {{ w.percent }}%"></div>
+                  <div class="progress-bar bg-primary rounded-pill" style="--bar-width: {{ w.percent }}%; width: var(--bar-width);"></div>
                 </div>
               </div>
             {% endfor %}
@@ -2480,7 +4753,6 @@ body {
     </form>
   </div>
 </div>
-
 
 {% elif page == 'medical_records' %}
 

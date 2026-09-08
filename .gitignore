@@ -1,3 +1,16 @@
 db.sqlite3
+db_backup_before_supabase_migration.sqlite3
+db_sqlite_original.sqlite3
+
+sqlite_data.json
+sqlite_data_backup.json
+supabase_before_import.json
+
 __pycache__/
+*.py[cod]
+
 .env
+venv/
+
+media/
+staticfiles/
