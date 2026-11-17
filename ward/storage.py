@@ -5,7 +5,6 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage, Storage
 from django.utils.deconstruct import deconstructible
 
-
 @deconstructible
 class SupabasePrivateAvatarStorage(Storage):
     """Use local storage in development and private Supabase storage on Vercel."""
@@ -24,7 +23,6 @@ class SupabasePrivateAvatarStorage(Storage):
             vercel_flag in {"1", "true"}
             or bool(os.getenv("VERCEL_URL", "").strip())
             or vercel_environment in {"production", "preview", "development"}
-
         )
 
     @property
@@ -110,53 +108,68 @@ class SupabasePrivateAvatarStorage(Storage):
         if not self._use_supabase:
             return self._local_storage.delete(name)
 
-        self._supabase.storage.from_(self.bucket_name).remove(
-            [self._object_path(name)]
-        )
+        try:
+            self._supabase.storage.from_(self.bucket_name).remove(
+                [self._object_path(name)]
+            )
+        except Exception:
+            pass
 
     def url(self, name):
         if not name:
             return ""
         if not self._use_supabase:
-            return self._local_storage.url(name)
+            try:
+                return self._local_storage.url(name)
+            except Exception:
+                return ""
 
-        response = self._supabase.storage.from_(self.bucket_name).create_signed_url(
-            self._object_path(name),
-            self.signed_url_ttl,
-        )
-        if isinstance(response, dict):
-            signed_url = response.get("signedURL") or response.get("signedUrl")
-        else:
-            signed_url = (
-                getattr(response, "signedURL", None)
-                or getattr(response, "signedUrl", None)
+        # FIX: Never crash the page if avatar is missing in Supabase
+        try:
+            response = self._supabase.storage.from_(self.bucket_name).create_signed_url(
+                self._object_path(name),
+                self.signed_url_ttl,
             )
+            if isinstance(response, dict):
+                signed_url = response.get("signedURL") or response.get("signedUrl")
+            else:
+                signed_url = (
+                    getattr(response, "signedURL", None)
+                    or getattr(response, "signedUrl", None)
+                )
 
-        if not signed_url:
-            raise RuntimeError("Supabase did not return an avatar signed URL.")
+            if not signed_url:
+                return ""
 
-        if signed_url.startswith(("https://", "http://")):
-            return signed_url
+            if signed_url.startswith(("https://", "http://")):
+                return signed_url
 
-        base_url = os.getenv("SUPABASE_URL", "").rstrip("/")
-        if not base_url:
-            raise RuntimeError("SUPABASE_URL must be configured for avatar signed URLs.")
-        if signed_url.startswith("/storage/v1/"):
-            return base_url + signed_url
-        if signed_url.startswith("/"):
-            return base_url + "/storage/v1" + signed_url
-        return base_url + "/storage/v1/" + signed_url
+            base_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+            if not base_url:
+                return ""
+            if signed_url.startswith("/storage/v1/"):
+                return base_url + signed_url
+            if signed_url.startswith("/"):
+                return base_url + "/storage/v1" + signed_url
+            return base_url + "/storage/v1/" + signed_url
+        except Exception:
+            # File not found in Supabase (404) or any other error
+            # Return empty so template shows no image instead of 500
+            return ""
 
     def size(self, name):
         if not self._use_supabase:
             return self._local_storage.size(name)
 
-        info = self._supabase.storage.from_(self.bucket_name).info(
-            self._object_path(name)
-        )
+        try:
+            info = self._supabase.storage.from_(self.bucket_name).info(
+                self._object_path(name)
+            )
+        except Exception:
+            return 0
         size = info.get("size")
         if size is None:
             size = (info.get("metadata") or {}).get("size")
         if size is None:
-            raise NotImplementedError("Supabase did not return the avatar size.")
+            return 0
         return int(size)
