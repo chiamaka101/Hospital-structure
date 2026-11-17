@@ -33,6 +33,7 @@ reportlab==4.4.10
 requests==2.33.1
 six==1.17.0
 sqlparse==0.5.5
+supabase==2.31.0
 twilio==9.10.5
 tzdata==2026.2
 urllib3==2.6.3

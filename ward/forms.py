@@ -249,7 +249,7 @@ class AdmissionForm(forms.ModelForm):
             'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
-class ConsultationForm(forms.ModelForm): # <-- THIS WAS MISSING
+class ConsultationForm(forms.ModelForm): 
     class Meta:
         model = Consultation
         fields = ['visit_notes', 'diagnosis', 'prescription']
@@ -372,12 +372,12 @@ class LaboratoryTestForm(forms.ModelForm):
         model = LaboratoryTest
         fields = ['patient', 'doctor', 'test_name', 'sample_type', 'priority', 'note']
         widgets = {
-            'patient': forms.Select(attrs={'class': 'form-select'}),
-            'doctor': forms.Select(attrs={'class': 'form-select'}),
-            'test_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'sample_type': forms.TextInput(attrs={'class': 'form-control'}),
-            'priority': forms.Select(attrs={'class': 'form-select'}),
-            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'patient': forms.Select(attrs={'class': 'form-select', 'autocomplete': 'off'}),
+            'doctor': forms.Select(attrs={'class': 'form-select', 'autocomplete': 'off'}),
+            'test_name': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off', 'placeholder': 'e.g. Malaria Test'}),
+            'sample_type': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off', 'placeholder': 'e.g. Blood'}),
+            'priority': forms.Select(attrs={'class': 'form-select', 'autocomplete': 'off'}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'autocomplete': 'off', 'placeholder': 'Enter clinical notes...'}),
         }
 
 class ProfileForm(forms.ModelForm):                         

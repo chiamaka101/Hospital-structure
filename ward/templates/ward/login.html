@@ -192,8 +192,9 @@
                     <span class="show">SHOW</span>
                 </div>
                 <div class="pass">
-                    <a href="#">Forgot Password?</a>
+                    <a href="{% url 'password_reset' %}">Forgot Password?</a>
                 </div>
+
                 <div class="field">
                     <input type="submit" value="LOGIN">
                 </div>
@@ -205,6 +206,19 @@
         </div>
     </div>
 
-    
+    <script>
+    const passwordInput = document.querySelector('.pass-key');
+    const showButton = document.querySelector('.show');
+
+    showButton.addEventListener('click', function () {
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            showButton.textContent = 'HIDE';
+        } else {
+            passwordInput.type = 'password';
+            showButton.textContent = 'SHOW';
+        }
+    });
+</script>
 </body>
 </html>

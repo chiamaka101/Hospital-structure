@@ -215,7 +215,7 @@ def contact(request):
     })
 
 # =========================================================
-# REPORTS - Receptionist/Admin only
+# REPORTS - Receptionist/Admin only - REAL ANALYSIS
 # =========================================================
 
 @login_required(login_url='login')
@@ -223,28 +223,76 @@ def contact(request):
 def report(request):
     today = timezone.now().date()
     now = timezone.now()
-    dates, counts = [], []
 
+    # --- Helper: Invoice total = service + lab + admission ---
+    invoice_total_expr = ExpressionWrapper(
+        F('service_fee') + F('lab_fee') + F('admission_fee'),
+        output_field=DecimalField(max_digits=12, decimal_places=2)
+    )
+
+    # --- 1. Last 7 days: Appointments + Revenue per day (REAL) ---
+    dates, counts, revenues = [], [], []
+    daily_data = []
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
         count = Appointment.objects.filter(date_time__date=day).count()
+        rev = Invoice.objects.filter(status='paid', date=day).aggregate(
+            total=Sum(invoice_total_expr)
+        )['total'] or 0
         dates.append(day.strftime('%a'))
         counts.append(count)
+        revenues.append(float(rev))
+        daily_data.append({'day': day, 'label': day.strftime('%a'), 'appointments': count, 'revenue': float(rev)})
 
+    # --- 2. Core stats ---
     stats = {
         'appointments': Appointment.objects.count(),
         'patients': Patient.objects.count(),
         'doctors': Doctor.objects.count(),
+        'invoices': Invoice.objects.count(),
+        'prescriptions': Prescription.objects.count(),
+        'admitted': Admission.objects.filter(status='admitted').count(),
+        'discharged': Admission.objects.filter(status='discharged').count(),
+        # Appointment breakdown - REAL, your status is 'scheduled'
+        'completed': Appointment.objects.filter(status='completed').count(),
+        'pending': Appointment.objects.filter(status='scheduled').count(),
+        'cancelled': Appointment.objects.filter(status='cancelled').count(),
+        # Money - REAL, using service+lab+admission
+        'revenue': Invoice.objects.filter(status='paid').aggregate(total=Sum(invoice_total_expr))['total'] or 0,
+        'outstanding': Invoice.objects.filter(status__in=['unpaid', 'partial']).aggregate(total=Sum(invoice_total_expr))['total'] or 0,
+        'paid_today': Invoice.objects.filter(status='paid', paid_at__date=today).aggregate(total=Sum(invoice_total_expr))['total'] or 0,
+        'new_patients_7days': Patient.objects.filter(created_at__date__gte=today - timedelta(days=6)).count(),
     }
 
-    fig, ax = plt.subplots(figsize=(8, 3))
-    ax.plot(dates, counts, marker='o', color='#2563eb', linewidth=2)
-    ax.fill_between(dates, counts, alpha=0.2, color='#2563eb')
-    ax.set_title('Appointments Last 7 Days', fontsize=12)
-    ax.set_ylabel('Count')
-    ax.grid(True, alpha=0.3)
-    plt.tight_layout()
+    # --- 3. Top 5 Diagnoses - REAL ---
+    stats['top_diagnoses'] = list(
+        MedicalRecord.objects.exclude(diagnosis__isnull=True).exclude(diagnosis__exact='')
+        .values('diagnosis').annotate(total=Count('id')).order_by('-total')[:5]
+    )
 
+    # --- 4. Top 5 Doctors by Appointments - REAL ---
+    # Doctor -> profile -> user, so use doctor__profile__user
+    stats['top_doctors'] = list(
+        Appointment.objects.exclude(doctor__isnull=True)
+        .values('doctor__profile__user__first_name', 'doctor__profile__user__last_name')
+        .annotate(total=Count('id')).order_by('-total')[:5]
+    )
+
+    # --- 5. Chart: Appointments (blue) + Revenue (green) - REAL, 2 lines ---
+    fig, ax1 = plt.subplots(figsize=(9, 3.5))
+    ax1.plot(dates, counts, marker='o', color='#2563eb', linewidth=2, label='Appointments')
+    ax1.fill_between(dates, counts, alpha=0.15, color='#2563eb')
+    ax1.set_ylabel('Appointments', color='#2563eb')
+    ax1.set_title('Appointments & Revenue - Last 7 Days', fontsize=12)
+    ax1.grid(True, alpha=0.3)
+    ax1.tick_params(axis='y', labelcolor='#2563eb')
+
+    ax2 = ax1.twinx()
+    ax2.plot(dates, revenues, marker='s', color='#16a34a', linewidth=2, linestyle='--', label='Revenue (₦)')
+    ax2.set_ylabel('Revenue (₦)', color='#16a34a')
+    ax2.tick_params(axis='y', labelcolor='#16a34a')
+
+    fig.tight_layout()
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=100)
     plt.close(fig)
@@ -256,6 +304,7 @@ def report(request):
         'chart_img': chart_img,
         'role': get_role(request.user),
         'stats': stats,
+        'daily_data': daily_data,
         'now': now
     })
 
@@ -263,28 +312,51 @@ def report(request):
 @role_required(['receptionist', 'admin'])
 def export_report_csv(request):
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="appointment_report_7days.csv"'
-    
+    response['Content-Disposition'] = 'attachment; filename="hospital_report_7days.csv"'
     writer = csv.writer(response)
-    writer.writerow(['Day', 'Date', 'Appointments'])
-    
+
+    invoice_total_expr = ExpressionWrapper(
+        F('service_fee') + F('lab_fee') + F('admission_fee'),
+        output_field=DecimalField(max_digits=12, decimal_places=2)
+    )
+
+    # Summary - REAL
+    writer.writerow(['HOSPITAL REPORT - SUMMARY'])
+    writer.writerow(['Total Appointments', Appointment.objects.count()])
+    writer.writerow(['Completed', Appointment.objects.filter(status='completed').count()])
+    writer.writerow(['Pending (Scheduled)', Appointment.objects.filter(status='scheduled').count()])
+    writer.writerow(['Cancelled', Appointment.objects.filter(status='cancelled').count()])
+    writer.writerow(['Registered Patients', Patient.objects.count()])
+    writer.writerow(['Available Doctors', Doctor.objects.count()])
+    writer.writerow(['Currently Admitted', Admission.objects.filter(status='admitted').count()])
+    writer.writerow(['Total Prescriptions', Prescription.objects.count()])
+    writer.writerow(['Total Revenue (Paid)', Invoice.objects.filter(status='paid').aggregate(total=Sum(invoice_total_expr))['total'] or 0])
+    writer.writerow(['Outstanding (Unpaid/Partial)', Invoice.objects.filter(status__in=['unpaid', 'partial']).aggregate(total=Sum(invoice_total_expr))['total'] or 0])
+    writer.writerow([])
+    writer.writerow(['Day', 'Date', 'Appointments', 'Revenue Paid (₦)'])
     today = timezone.now().date()
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
         count = Appointment.objects.filter(date_time__date=day).count()
-        writer.writerow([day.strftime('%a'), day.strftime('%Y-%m-%d'), count])
-    
+        rev = Invoice.objects.filter(status='paid', date=day).aggregate(total=Sum(invoice_total_expr))['total'] or 0
+        writer.writerow([day.strftime('%a'), day.strftime('%Y-%m-%d'), count, rev])
+    writer.writerow([])
+    writer.writerow(['Top Diagnoses'])
+    writer.writerow(['Diagnosis', 'Count'])
+    for d in MedicalRecord.objects.exclude(diagnosis__isnull=True).exclude(diagnosis__exact='').values('diagnosis').annotate(total=Count('id')).order_by('-total')[:5]:
+        writer.writerow([d['diagnosis'], d['total']])
+
     return response
 # =========================================================
 # DASHBOARD - FIXED WITH DAILY DATA + UNPAID ₦ + CONSULTATION
 # =========================================================
-@login_required(login_url='login') 
+@login_required(login_url='login')
 def dashboard(request):
     role = get_role(request.user)
     today = timezone.now().date()
     yesterday = today - timedelta(days=1)
     now = timezone.now()
-    
+
     # 1. FIX: Extract appointment_id at the top of the view
     page = request.GET.get('page', 'dashboard')
     appointment_id = request.GET.get('appointment_id')
@@ -308,10 +380,10 @@ def dashboard(request):
     patient_trend = patients_today - patients_yesterday
 
     appointments_today = appointments_qs.filter(date_time__date=today).count()
-    
+
     active_admissions = admissions_qs.filter(discharge_date__isnull=True).count()
     discharged_today = admissions_qs.filter(discharge_date__date=today).count()
-    
+
     unpaid_total = invoices_qs.filter(status='unpaid').aggregate(
         total=Sum(ExpressionWrapper(
             F('service_fee') + F('lab_fee') + F('admission_fee'),
@@ -319,7 +391,7 @@ def dashboard(request):
         ))
     )['total'] or 0
     unpaid_count = invoices_qs.filter(status='unpaid').count()
-    
+
     paid_today = invoices_qs.filter(status='paid', paid_at__date=today).aggregate(
         total=Sum(ExpressionWrapper(
             F('service_fee') + F('lab_fee') + F('admission_fee'),
@@ -368,7 +440,7 @@ def dashboard(request):
             'unpaid_count': unpaid_count,
             'paid_today': paid_today,
             'doctors_on_duty': Doctor.objects.count(),
-            'available_beds': 14,  
+            'available_beds': 14,
             'departments_open': 6,
         },
         'today_appointments': today_apts_qs,
@@ -418,25 +490,79 @@ def dashboard(request):
 
     elif page == 'appointments':
         appointments = appointments_qs.select_related('patient', 'doctor__profile__user').order_by('-date_time')
-        
+
         search_query = request.GET.get('search', '').strip()
         if search_query:
             appointments = appointments.filter(
                 Q(doctor__profile__user__first_name__icontains=search_query) |
                 Q(doctor__profile__user__last_name__icontains=search_query) |
                 Q(doctor__profile__user__username__icontains=search_query) |
-                Q(patient__name__icontains=search_query)  
+                Q(patient__name__icontains=search_query)
             )
-        
+
         status = request.GET.get('status')
         if status:
             appointments = appointments.filter(status=status)
 
-        paginator = Paginator(appointments, 10) 
+        paginator = Paginator(appointments, 10)
         page_num = request.GET.get('page_num', 1)
-        
+
         context['appointments'] = paginator.get_page(page_num)
         context['appointment_form'] = AppointmentForm()
+
+    elif page == 'medical_records':
+        if role not in ('admin', 'receptionist', 'nurse', 'doctor'):
+            messages.error(request, 'You do not have permission to view medical records.')
+            return redirect('/dashboard/')
+        medical_records = MedicalRecord.objects.select_related(
+            'patient', 'doctor', 'doctor__profile__user'
+        ).order_by('-created_at')
+        if role == 'doctor':
+            medical_records = (
+                medical_records.filter(doctor=doctor) if doctor
+                else medical_records.none()
+            )
+        context['medical_records'] = medical_records
+
+    elif page == 'prescriptions':
+        if role not in ('admin', 'receptionist', 'doctor'):
+            messages.error(request, 'You do not have permission to view prescriptions.')
+            return redirect('/dashboard/')
+        prescriptions = Prescription.objects.select_related(
+            'patient', 'doctor'
+        ).prefetch_related('items').order_by('-date_issued')
+        if role == 'doctor':
+            prescriptions = (
+                prescriptions.filter(doctor=doctor) if doctor
+                else prescriptions.none()
+            )
+        context['prescriptions'] = prescriptions
+
+    elif page == 'invoices':
+        if role not in ('admin', 'receptionist', 'accountant'):
+            messages.error(request, 'You do not have permission to access billing.')
+            return redirect('/dashboard/')
+
+        invoices_list = invoices_qs.select_related(
+            'patient', 'doctor'
+        ).order_by('-date')
+
+        def inv_total(inv):
+            return (inv.service_fee or 0) + (inv.lab_fee or 0) + (inv.admission_fee or 0)
+
+        total_revenue = sum(inv_total(inv) for inv in invoices_list)
+        paid_revenue = sum(
+            inv_total(inv) for inv in invoices_list if inv.status == 'paid'
+        )
+        outstanding = sum(
+            inv_total(inv) for inv in invoices_list
+            if inv.status in ['unpaid', 'partial']
+        )
+
+        context['invoices'] = invoices_list
+        context['total_revenue'] = total_revenue
+        context['paid_this_month'] = paid_revenue
+        context['outstanding'] = outstanding
 
     elif page == 'consultation' and appointment_id:
         appointment = Appointment.objects.filter(id=appointment_id).first()
@@ -469,7 +595,7 @@ def dashboard(request):
         if not appointment:
             messages.error(request, 'Appointment not found.')
             return redirect('/dashboard/?page=appointments')
-            
+
         context['appointment'] = appointment
         context['consultation'] = getattr(appointment, 'consultation', None)
         return render(request, 'ward/home.html', context)
@@ -502,12 +628,29 @@ def dashboard(request):
         context['appointment_form'] = appointment_form
 
     elif page == 'admissions':
-        pass
+        return admissions_view(request)
 
     elif page == 'notifications':
         context['notifications'] = Notification.objects.filter(
             user=request.user
         ).order_by('-created_at')
+
+    elif page == 'create_test_request':
+        if request.method == 'POST':
+            form = LaboratoryTestForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Laboratory test request created successfully.')
+                return redirect('/dashboard/?page=laboratory')
+        else:
+            form = LaboratoryTestForm()
+
+        context['form'] = form
+
+    elif page == 'laboratory':
+        context['lab_tests'] = LaboratoryTest.objects.select_related(
+            'patient', 'doctor'
+        ).order_by('-id')
 
     elif page == 'profile':
         context['role'] = role
@@ -1142,7 +1285,6 @@ def admit_patient(request):
 
     return redirect('/dashboard/?page=admissions')
 
-
 @login_required(login_url='login')
 @role_required(['receptionist', 'admin', 'doctor'])
 def edit_admission(request):
@@ -1157,66 +1299,70 @@ def edit_admission(request):
         else:
             messages.error(request, "Admission record not found.")
 
-    return redirect('/dashboard/?page=admissions') 
-
+    return redirect('/dashboard/?page=admissions')
 
 @login_required(login_url='login')
 @role_required(['receptionist', 'admin', 'doctor'])
 def admissions_view(request):
     role = get_role(request.user)
     doctor = get_doctor_profile(request.user)
-    
-    admissions = Admission.objects.select_related('patient', 'ward', 'doctor__user').all()
-    
+
+    # FIXED: Doctor has 'profile' and 'department', NOT 'user'
+    admissions_base = Admission.objects.select_related('patient', 'ward', 'doctor', 'doctor__profile', 'doctor__department').all()
+    if role == 'doctor':
+        admissions_base = admissions_base.filter(doctor=doctor) if doctor else admissions_base.none()
+    admissions = admissions_base
+
     q = request.GET.get('q')
     if q:
+        # FIXED: Removed patient__patient_id and doctor__user__first_name - those fields do not exist
+        # Only using fields that exist: patient__name, ward__name, diagnosis, reason
         admissions = admissions.filter(
             Q(patient__name__icontains=q) |
-            Q(patient__patient_id__icontains=q) |
             Q(ward__name__icontains=q) |
-            Q(doctor__user__first_name__icontains=q) |
-            Q(doctor__user__last_name__icontains=q)
+            Q(diagnosis__icontains=q) |
+            Q(reason__icontains=q)
         )
-    
+
     ward_id = request.GET.get('ward')
     if ward_id:
         admissions = admissions.filter(ward_id=ward_id)
-    
+
     status = request.GET.get('status')
     if status == 'admitted':
         admissions = admissions.filter(status='admitted')
     elif status == 'discharged':
         admissions = admissions.filter(status='discharged')
-    
+
     start_date = request.GET.get('start_date')
     if start_date:
         admissions = admissions.filter(admission_date__date__gte=start_date)
-    
+
     admissions = admissions.order_by('-admission_date')
-    
-    total_admissions = Admission.objects.count()
-    admitted_count = Admission.objects.filter(status='admitted').count()
-    discharged_today = Admission.objects.filter(
-        status='discharged', 
+
+    total_admissions = admissions_base.count()
+    admitted_count = admissions_base.filter(status='admitted').count()
+    discharged_today = admissions_base.filter(
+        status='discharged',
         discharge_date__date=timezone.now().date()
     ).count()
-    emergency_count = Admission.objects.filter(status='admitted', is_emergency=True).count()
-    pending_discharge = Admission.objects.filter(status='admitted', pending_discharge=True).count()
-    
-    ward_stats = Admission.objects.filter(status='admitted').values('ward__name').annotate(
+    emergency_count = admissions_base.filter(status='admitted', reason__icontains='emergency').count()
+    pending_discharge = 0
+
+    ward_stats = admissions_base.filter(status='admitted').values('ward__name').annotate(
         count=Count('id')
     ).order_by('-count')[:5]
-    
+
     total_active = admitted_count or 1
     for w in ward_stats:
         w['percent'] = round((w['count'] / total_active) * 100)
-    
-    recent_admissions = Admission.objects.select_related('patient', 'ward').order_by('-admission_date')[:5]
-    
+
+    recent_admissions = admissions_base.select_related('patient', 'ward').order_by('-admission_date')[:5]
+
     admission_form = AdmissionForm()
     wards = Ward.objects.all()
-    doctors = Doctor.objects.select_related('user').filter(is_active=True)
-    
+    doctors = Doctor.objects.select_related('profile', 'department').all()
+
     if request.method == 'POST':
         if 'admit_patient' in request.POST:
             admission_form = AdmissionForm(request.POST)
@@ -1259,7 +1405,7 @@ def admissions_view(request):
                     request,
                     admission_form.errors.as_text()
                 )
-        
+
         elif 'discharge' in request.POST:
             discharge_id = request.POST.get('discharge_id')
             admission = Admission.objects.filter(id=discharge_id).first()
@@ -1272,36 +1418,36 @@ def admissions_view(request):
             else:
                 messages.error(request, 'Admission not found or already discharged.')
             return redirect('/dashboard/?page=admissions')
-        
+
         elif 'edit_id' in request.POST:
             edit_id = request.POST.get('edit_id')
             admission = Admission.objects.filter(id=edit_id).first()
-            
+
             if not admission:
                 messages.error(request, 'Admission record not found.')
                 return redirect('/dashboard/?page=admissions')
-            
+
             if role == 'doctor' and doctor:
                 if admission.doctor != doctor:
                     messages.error(request, 'You can only edit your assigned patients.')
                     return redirect('/dashboard/?page=admissions')
-            
+
             ward_id = request.POST.get('ward')
             doctor_id = request.POST.get('doctor')
             diagnosis = request.POST.get('diagnosis')
-            
+
             if ward_id:
                 admission.ward_id = ward_id
             if doctor_id:
                 admission.doctor_id = doctor_id
             if diagnosis:
                 admission.diagnosis = diagnosis
-            
+
             admission.save()
             log_activity(request.user, f"Updated admission for {admission.patient.name}", admission.patient)
             messages.success(request, 'Admission updated successfully.')
             return redirect('/dashboard/?page=admissions')
-    
+
     context = {
         'page': 'admissions',
         'admissions': admissions,
@@ -1317,7 +1463,7 @@ def admissions_view(request):
         'recent_admissions': recent_admissions,
         'role': role,
     }
-    
+
     return render(request, 'ward/home.html', context)
 # =========================================================
 # CONSULTATION - Doctor only
@@ -1347,7 +1493,6 @@ def create_consultation(request, appointment_id):
             log_activity(request.user, 'Created consultation', consultation)
             messages.success(request, 'Consultation completed.')
     return redirect('/dashboard/?page=appointments')
-
 # =========================================================
 # PRESCRIPTIONS - Doctor only
 # =========================================================
@@ -1818,6 +1963,7 @@ def create_invoice(request):
     })
 
 @login_required(login_url='login')
+@role_required(['receptionist', 'admin', 'accountant'])
 def invoices_list(request):
     q = request.GET.get('search', '')
     status = request.GET.get('status', '')
@@ -1832,18 +1978,13 @@ def invoices_list(request):
     if method:
         invoices = invoices.filter(payment_method=method)
 
-    total_revenue = sum(inv.total for inv in invoices)
-    paid_revenue = sum(inv.total for inv in invoices if inv.status == 'paid')
-    outstanding = sum(inv.total for inv in invoices if inv.status == 'unpaid')
+    total_revenue = sum((inv.total or 0) for inv in invoices)
+    paid_revenue = sum((inv.total or 0) for inv in invoices if inv.status == 'paid')
+    outstanding = sum((inv.total or 0) for inv in invoices if inv.status in ['unpaid', 'partial'])
 
     role = get_role(request.user)
     my_revenue = 0
 
-    if role == 'doctor':
-        doctor = get_doctor_profile(request.user)
-        if doctor:
-            invoices = invoices.filter(doctor=doctor)
-            my_revenue = sum(inv.total for inv in invoices if inv.status == 'paid')
 
     return render(request, 'ward/home.html', {
         'page': 'invoices',
@@ -1856,6 +1997,7 @@ def invoices_list(request):
     })
 
 @login_required(login_url='login')
+@role_required(['receptionist', 'admin', 'accountant'])
 def edit_invoice(request, invoice_id):
     invoice = Invoice.objects.filter(id=invoice_id).first()
     if not invoice:
@@ -1894,6 +2036,7 @@ def mark_invoice_paid(request, invoice_id):
     return redirect('/dashboard/?page=invoices')
 
 @login_required(login_url='login')
+@role_required(['receptionist', 'admin', 'accountant'])
 def invoice_pdf(request, invoice_id):
     invoice = Invoice.objects.select_related('patient', 'doctor').filter(id=invoice_id).first()
 
